@@ -18,7 +18,9 @@
 
 -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd"
+>
 
   <modelVersion>4.0.0</modelVersion>
 
@@ -41,7 +43,10 @@
     <slf4j.version>1.6.4</slf4j.version>
     <mockito.version>1.8.5</mockito.version>
     <maven.source.plugin.version>2.1.2</maven.source.plugin.version>
+    <jackson.version>1.9.6</jackson.version>
+    <activemq.version>5.5.1</activemq.version>
     <openengsb.version>3.0.0-SNAPSHOT</openengsb.version>
+    <hamcrest.version>1.2.1</hamcrest.version>
   </properties>
 
   <licenses>
@@ -72,6 +77,12 @@
   <build>
     <plugins>
       <plugin>
+        <groupId>org.apache.felix</groupId>
+        <artifactId>maven-bundle-plugin</artifactId>
+        <extensions>true</extensions>
+      </plugin>
+
+      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-source-plugin</artifactId>
         <version>${maven.source.plugin.version}</version>
@@ -94,6 +105,26 @@
         <groupId>org.openengsb.framework</groupId>
         <artifactId>org.openengsb.framework.api</artifactId>
         <version>${openengsb.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.openengsb.connector</groupId>
+        <artifactId>org.openengsb.connector.usernamepassword</artifactId>
+        <version>${openengsb.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.codehaus.jackson</groupId>
+        <artifactId>jackson-core-asl</artifactId>
+        <version>${jackson.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.codehaus.jackson</groupId>
+        <artifactId>jackson-mapper-asl</artifactId>
+        <version>${jackson.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.activemq</groupId>
+        <artifactId>activemq-core</artifactId>
+        <version>${activemq.version}</version>
       </dependency>
       <!-- Internal Dependencies -->
       <dependency>
@@ -121,9 +152,15 @@
       <!-- Test Libraries -->
       <dependency>
         <groupId>junit</groupId>
-        <artifactId>junit</artifactId>
+        <artifactId>junit-dep</artifactId>
         <version>${junit.version}</version>
         <scope>test</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>org.hamcrest</groupId>
+            <artifactId>hamcrest-core</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.mockito</groupId>
@@ -133,8 +170,8 @@
       </dependency>
       <dependency>
         <groupId>org.hamcrest</groupId>
-        <artifactId>hamcrest-all</artifactId>
-        <version>1.1</version>
+        <artifactId>hamcrest-library</artifactId>
+        <version>${hamcrest.version}</version>
         <scope>test</scope>
       </dependency>
     </dependencies>
