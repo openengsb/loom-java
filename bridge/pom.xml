@@ -62,6 +62,10 @@
       <artifactId>org.openengsb.framework.api</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.openengsb.framework</groupId>
+      <artifactId>org.openengsb.framework.common.json</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.openengsb.connector</groupId>
       <artifactId>org.openengsb.connector.usernamepassword</artifactId>
     </dependency>

@@ -107,6 +107,11 @@
         <version>${openengsb.version}</version>
       </dependency>
       <dependency>
+        <groupId>org.openengsb.framework</groupId>
+        <artifactId>org.openengsb.framework.common.json</artifactId>
+        <version>${openengsb.version}</version>
+      </dependency>
+      <dependency>
         <groupId>org.openengsb.connector</groupId>
         <artifactId>org.openengsb.connector.usernamepassword</artifactId>
         <version>${openengsb.version}</version>

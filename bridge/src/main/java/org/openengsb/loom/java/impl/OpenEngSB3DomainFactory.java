@@ -23,10 +23,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.Map;
 import java.util.UUID;
 
@@ -42,26 +39,15 @@ import javax.jms.Session;
 import javax.jms.TextMessage;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
-import org.apache.commons.lang.ClassUtils;
-import org.codehaus.jackson.annotate.JsonTypeInfo;
-import org.codehaus.jackson.annotate.JsonTypeInfo.Id;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.map.ObjectMapper.DefaultTypeResolverBuilder;
-import org.codehaus.jackson.map.ObjectMapper.DefaultTyping;
-import org.codehaus.jackson.map.jsontype.TypeIdResolver;
-import org.codehaus.jackson.map.jsontype.TypeResolverBuilder;
-import org.codehaus.jackson.map.type.CollectionType;
-import org.codehaus.jackson.map.type.MapType;
-import org.codehaus.jackson.map.type.SimpleType;
-import org.codehaus.jackson.type.JavaType;
 import org.openengsb.connector.usernamepassword.Password;
 import org.openengsb.core.api.ConnectorManager;
 import org.openengsb.core.api.Domain;
+import org.openengsb.core.api.remote.GenericObjectSerializer;
 import org.openengsb.core.api.remote.MethodCall;
 import org.openengsb.core.api.remote.MethodCallRequest;
 import org.openengsb.core.api.security.model.SecureRequest;
 import org.openengsb.core.api.security.model.SecureResponse;
-import org.openengsb.labs.delegation.service.Provide;
+import org.openengsb.core.common.json.JsonObjectSerializer;
 import org.osgi.framework.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,7 +61,7 @@ public class OpenEngSB3DomainFactory {
 
     private MessageProducer receiveQueueProducer;
 
-    private ObjectMapper objectMapper = createMapperWithDefaults();
+    private GenericObjectSerializer objectSerializer = new JsonObjectSerializer();
 
     private String identifier;
 
@@ -167,7 +153,8 @@ public class OpenEngSB3DomainFactory {
                     Message result = replyMessageQueue.poll(correlationId);
                     TextMessage textResult = (TextMessage) result;
                     String resultString = textResult.getText();
-                    SecureResponse response = objectMapper.readValue(resultString, SecureResponse.class);
+                    LOGGER.info("received response: {}", resultString);
+                    SecureResponse response = objectSerializer.parse(resultString, SecureResponse.class);
                     return response.getMessage().getResult().getArg();
                 }
             });
@@ -181,134 +168,10 @@ public class OpenEngSB3DomainFactory {
         methodCall.setMetaData(metadata);
         MethodCallRequest methodCallRequest = new MethodCallRequest(methodCall);
         SecureRequest create = SecureRequest.create(methodCallRequest, "admin", new Password("password"));
-        return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(create);
+        return objectSerializer.serializeToString(create);
     }
 
     public void unregisterConnector(Object connectorInstance) {
 
-    }
-
-    private static ObjectMapper createMapperWithDefaults() {
-        ObjectMapper mapper = new ObjectMapper();
-
-        TypeResolverBuilder<?> typer = new DefaultTypeResolverBuilder(DefaultTyping.OBJECT_AND_NON_CONCRETE) {
-            @Override
-            public boolean useForType(JavaType t) {
-                /*
-                 * skip typing for containers
-                 * 
-                 * This is required to avoid inclusion of specific type for maps and other container types.
-                 * 
-                 * Example:
-                 * 
-                 * {
-                 * 
-                 * "@type" : "java.util.HashMap", <-- we don't want that
-                 * 
-                 * "id" : "foo"
-                 * 
-                 * }
-                 */
-                return super.useForType(t) && !t.isContainerType();
-            }
-        };
-        typer = typer.init(JsonTypeInfo.Id.NAME, new DelegatingTypeIdResolver());
-        typer = typer.inclusion(JsonTypeInfo.As.PROPERTY);
-        mapper.setDefaultTyping(typer);
-
-        return mapper;
-    }
-
-    static final class DelegatingTypeIdResolver implements TypeIdResolver {
-        private static final Logger LOGGER = LoggerFactory.getLogger(DelegatingTypeIdResolver.class);
-
-        private static Map<String, Class<?>> predefinedImplementations = new HashMap<String, Class<?>>();
-        static {
-            predefinedImplementations.put("list", LinkedList.class);
-            predefinedImplementations.put("map", LinkedHashMap.class);
-            predefinedImplementations.put("string", String.class);
-        }
-
-        private static Map<Class<?>, String> specialTypes = new HashMap<Class<?>, String>();
-        static {
-            specialTypes.put(Collection.class, "list");
-            specialTypes.put(Map.class, "map");
-            specialTypes.put(String.class, "string");
-        }
-
-        public DelegatingTypeIdResolver() {
-        }
-
-        private Class<?> doLoadClass(String name) throws ClassNotFoundException {
-            if (predefinedImplementations.containsKey(name)) {
-                return predefinedImplementations.get(name);
-            }
-            try {
-                return getClass().getClassLoader().loadClass(name);
-            } catch (ClassNotFoundException e) {
-                // ignore, try next
-            }
-            return Thread.currentThread().getContextClassLoader().loadClass(name);
-        }
-
-        @Override
-        public JavaType typeFromId(String id) {
-            try {
-                LOGGER.info("resolving type from id {}", id);
-                Class<?> clazz = doLoadClass(id);
-                LOGGER.info("-> resolved {}", clazz.getName());
-                if (Map.class.isAssignableFrom(clazz)) {
-                    SimpleType oType = SimpleType.construct(Object.class);
-                    return MapType.construct(clazz, oType, oType);
-                }
-                if (Collection.class.isAssignableFrom(clazz)) {
-                    return CollectionType.construct(clazz, SimpleType.construct(Object.class));
-                }
-                return SimpleType.construct(clazz);
-            } catch (ClassNotFoundException e) {
-                LOGGER.error("could not load class {}", id, e);
-                return null;
-            }
-        }
-
-        @Override
-        public void init(JavaType baseType) {
-            LOGGER.info("init TypeIdResolver ", baseType);
-        }
-
-        @Override
-        public String idFromValueAndType(Object value, Class<?> suggestedType) {
-            LOGGER.info("get id from type {} - {}", value, suggestedType);
-            Provide annotation = suggestedType.getAnnotation(Provide.class);
-            if (annotation != null) {
-                LOGGER.info("got {} from annotation", annotation.alias());
-                return annotation.alias()[0];
-            }
-            return useSpecialType(suggestedType);
-        }
-
-        private String useSpecialType(Class<?> suggestedType) {
-            for (Map.Entry<Class<?>, String> entry : specialTypes.entrySet()) {
-                if (entry.getKey().isAssignableFrom(suggestedType)) {
-                    return entry.getValue();
-                }
-            }
-            if (specialTypes.containsKey(suggestedType)) {
-                return specialTypes.get(suggestedType);
-            }
-            Class<?> primitive = ClassUtils.wrapperToPrimitive(suggestedType);
-            return primitive != null ? primitive.getName() : suggestedType.getName();
-        }
-
-        @Override
-        public String idFromValue(Object value) {
-            LOGGER.info("resolving idFromValue for {}", value);
-            return idFromValueAndType(value, value.getClass());
-        }
-
-        @Override
-        public Id getMechanism() {
-            return Id.NAME;
-        }
     }
 }
