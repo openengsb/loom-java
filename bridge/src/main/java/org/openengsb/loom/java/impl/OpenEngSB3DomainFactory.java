@@ -87,6 +87,7 @@ public class OpenEngSB3DomainFactory {
         }
         replyQueue = session.createQueue(identifier);
         MessageConsumer consumer = session.createConsumer(replyQueue);
+        LOGGER.info("listening on queue {}", replyQueue);
         consumer.setMessageListener(new MessageListener() {
             @Override
             public void onMessage(Message message) {
@@ -167,6 +168,7 @@ public class OpenEngSB3DomainFactory {
             String.format("(%s=%s)", Constants.OBJECTCLASS, method.getDeclaringClass().getName()));
         methodCall.setMetaData(metadata);
         MethodCallRequest methodCallRequest = new MethodCallRequest(methodCall);
+        methodCallRequest.setAnswer(true);
         SecureRequest create = SecureRequest.create(methodCallRequest, "admin", new Password("password"));
         return objectSerializer.serializeToString(create);
     }
