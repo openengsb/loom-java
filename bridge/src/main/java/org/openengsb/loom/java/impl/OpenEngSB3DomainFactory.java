@@ -39,15 +39,15 @@ import javax.jms.Session;
 import javax.jms.TextMessage;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.openengsb.connector.usernamepassword.Password;
 import org.openengsb.core.api.ConnectorManager;
 import org.openengsb.core.api.Domain;
-import org.openengsb.core.api.remote.GenericObjectSerializer;
+import org.openengsb.core.api.model.BeanDescription;
 import org.openengsb.core.api.remote.MethodCall;
 import org.openengsb.core.api.remote.MethodCallRequest;
 import org.openengsb.core.api.security.model.SecureRequest;
 import org.openengsb.core.api.security.model.SecureResponse;
-import org.openengsb.core.common.json.JsonObjectSerializer;
 import org.osgi.framework.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,7 +61,7 @@ public class OpenEngSB3DomainFactory {
 
     private MessageProducer receiveQueueProducer;
 
-    private GenericObjectSerializer objectSerializer = new JsonObjectSerializer();
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private String identifier;
 
@@ -143,6 +143,9 @@ public class OpenEngSB3DomainFactory {
             new InvocationHandler() {
                 @Override
                 public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+                    if(args == null){
+                        args = new Object[0];
+                    }
                     String text = marshal(method, args);
                     LOGGER.info("sending: {}", text);
                     TextMessage message = session.createTextMessage(text);
@@ -155,7 +158,7 @@ public class OpenEngSB3DomainFactory {
                     TextMessage textResult = (TextMessage) result;
                     String resultString = textResult.getText();
                     LOGGER.info("received response: {}", resultString);
-                    SecureResponse response = objectSerializer.parse(resultString, SecureResponse.class);
+                    SecureResponse response = OBJECT_MAPPER.readValue(resultString, SecureResponse.class);
                     return response.getMessage().getResult().getArg();
                 }
             });
@@ -169,8 +172,9 @@ public class OpenEngSB3DomainFactory {
         methodCall.setMetaData(metadata);
         MethodCallRequest methodCallRequest = new MethodCallRequest(methodCall);
         methodCallRequest.setAnswer(true);
-        SecureRequest create = SecureRequest.create(methodCallRequest, "admin", new Password("password"));
-        return objectSerializer.serializeToString(create);
+        SecureRequest create =
+            SecureRequest.create(methodCallRequest, "admin", BeanDescription.fromObject(new Password("password")));
+        return OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(create);
     }
 
     public void unregisterConnector(Object connectorInstance) {
