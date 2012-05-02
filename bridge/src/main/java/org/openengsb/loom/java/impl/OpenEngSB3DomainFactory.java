@@ -19,11 +19,13 @@ package org.openengsb.loom.java.impl;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -37,20 +39,28 @@ import javax.jms.MessageProducer;
 import javax.jms.Queue;
 import javax.jms.Session;
 import javax.jms.TextMessage;
+import javax.management.RuntimeErrorException;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.openengsb.connector.usernamepassword.Password;
 import org.openengsb.core.api.ConnectorManager;
+import org.openengsb.core.api.ConnectorValidationFailedException;
 import org.openengsb.core.api.Domain;
 import org.openengsb.core.api.model.BeanDescription;
+import org.openengsb.core.api.model.ConnectorDefinition;
+import org.openengsb.core.api.model.ConnectorDescription;
 import org.openengsb.core.api.remote.MethodCall;
 import org.openengsb.core.api.remote.MethodCallRequest;
+import org.openengsb.core.api.remote.MethodResult;
+import org.openengsb.core.api.remote.MethodResultMessage;
 import org.openengsb.core.api.security.model.SecureRequest;
 import org.openengsb.core.api.security.model.SecureResponse;
 import org.osgi.framework.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.collect.ImmutableMap;
 
 public class OpenEngSB3DomainFactory {
 
@@ -132,21 +142,115 @@ public class OpenEngSB3DomainFactory {
         connection.close();
     }
 
-    public <T extends Domain> void registerConnector(T connectorInstance) {
-        ConnectorManager remoteProxy = getRemoteProxy(ConnectorManager.class);
+    public <T extends Domain> String registerConnector(String domainType, final T connectorInstance)
+        throws ConnectorValidationFailedException, JMSException {
+        ConnectorManager cm = getRemoteProxy(ConnectorManager.class, null);
+        ConnectorDefinition def = ConnectorDefinition.generate("example", "external-connector-proxy");
+        String queuename = def.getInstanceId();
+        queuename = "example-remote";
+        Queue connectorIncQueue = session.createQueue(queuename);
+        MessageConsumer createConsumer = session.createConsumer(connectorIncQueue);
+        createConsumer.setMessageListener(new MessageListener() {
+            @Override
+            public void onMessage(Message message) {
+                LOGGER.info("received: " + message);
+                TextMessage tm = (TextMessage) message;
+                String text;
+                try {
+                    text = tm.getText();
+                } catch (JMSException e) {
+                    LOGGER.error("Exception when retrieving message", e);
+                    return;
+                }
+                LOGGER.info("received text {}", text);
+                SecureRequest request;
+                try {
+                    request = OBJECT_MAPPER.readValue(text, SecureRequest.class);
+                } catch (IOException e) {
+                    LOGGER.error("Exception when parsing message", e);
+                    return;
+                }
+                LOGGER.info(request.toString());
+                MethodResult result;
+                MethodCall methodCall = request.getMessage().getMethodCall();
+                if (methodCall.getMethodName().contains("set")) {
+                    result = MethodResult.newVoidResult();
+                } else {
+                    List<String> classes = methodCall.getClasses();
+                    Class<?>[] argTypes = new Class<?>[classes.size()];
+                    for (int i = 0; i < classes.size(); i++) {
+                        try {
+                            argTypes[i] = Class.forName(classes.get(i));
+                        } catch (ClassNotFoundException e) {
+                            LOGGER.error("unable to find class", e);
+                            return;
+                        }
+                    }
+                    Method m;
+                    try {
+                        m = connectorInstance.getClass().getMethod(methodCall.getMethodName(), argTypes);
+                    } catch (NoSuchMethodException e) {
+                        throw new RuntimeException(e);
+                    }
+                    try {
+                        Object invoke = m.invoke(connectorInstance, methodCall.getArgs());
+                        result = new MethodResult(invoke);
+                    } catch (IllegalAccessException e) {
+                        throw new RuntimeException(e);
+                    } catch (InvocationTargetException e) {
+                        throw new RuntimeException(e.getCause());
+                    }
+                }
 
+                String callId = request.getMessage().getCallId();
+                SecureResponse create =
+                    SecureResponse.create(new MethodResultMessage(result, callId));
+                String json;
+                try {
+                    json = OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(create);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+                Queue createQueue;
+                try {
+                    createQueue = session.createQueue(callId);
+                } catch (JMSException e) {
+                    LOGGER.error("error creating result-queue", e);
+                    return;
+                }
+                MessageProducer producer;
+                try {
+                    producer = session.createProducer(createQueue);
+                    producer.send(session.createTextMessage(json));
+                } catch (JMSException e) {
+                    LOGGER.error("error creating result-queue", e);
+                    return;
+                }
+            }
+        });
+        MessageListener messageListener = createConsumer.getMessageListener();
+        System.out.println(messageListener);
+        String destination = "tcp://127.0.0.1:6549?" + queuename;
+        Map<String, String> attr =
+            ImmutableMap.of("portId", "jms-json", "destination", destination, "serviceId",
+                def.getInstanceId());
+        Map<String, Object> props = ImmutableMap.of();
+
+        cm.create(def, new ConnectorDescription(attr, props));
+        return def.getInstanceId();
+        // return queuename;
     }
 
     @SuppressWarnings("unchecked")
-    public <T> T getRemoteProxy(Class<T> serviceType) {
+    public <T> T getRemoteProxy(Class<T> serviceType, final String serviceId) {
         return (T) Proxy.newProxyInstance(getClass().getClassLoader(), new Class<?>[]{ serviceType },
             new InvocationHandler() {
                 @Override
                 public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-                    if(args == null){
+                    if (args == null) {
                         args = new Object[0];
                     }
-                    String text = marshal(method, args);
+                    String text = marshal(method, args, serviceId);
                     LOGGER.info("sending: {}", text);
                     TextMessage message = session.createTextMessage(text);
                     String correlationId = UUID.randomUUID().toString();
@@ -164,11 +268,18 @@ public class OpenEngSB3DomainFactory {
             });
     }
 
-    private String marshal(Method method, Object[] args) throws IOException {
+    private String marshal(Method method, Object[] args, String serviceId) throws IOException {
         MethodCall methodCall = new MethodCall(method.getName(), args);
         Map<String, String> metadata = new HashMap<String, String>();
-        metadata.put("serviceFilter",
-            String.format("(%s=%s)", Constants.OBJECTCLASS, method.getDeclaringClass().getName()));
+        if (serviceId != null) {
+            metadata.put("serviceFilter",
+                String.format("(&(%s=%s)(%s=%s))", Constants.OBJECTCLASS, method.getDeclaringClass().getName(),
+                    "id", serviceId));
+        } else {
+            metadata.put("serviceFilter",
+                String.format("(%s=%s)", Constants.OBJECTCLASS, method.getDeclaringClass().getName()));
+        }
+
         methodCall.setMetaData(metadata);
         MethodCallRequest methodCallRequest = new MethodCallRequest(methodCall);
         methodCallRequest.setAnswer(true);

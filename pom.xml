@@ -47,6 +47,7 @@
     <activemq.version>5.5.1</activemq.version>
     <openengsb.version>3.0.0-SNAPSHOT</openengsb.version>
     <hamcrest.version>1.2.1</hamcrest.version>
+    <guava.version>11.0.2</guava.version>
   </properties>
 
   <licenses>
@@ -117,6 +118,12 @@
         <version>${openengsb.version}</version>
       </dependency>
       <dependency>
+        <groupId>org.openengsb.domain</groupId>
+        <artifactId>org.openengsb.domain.example</artifactId>
+        <version>${openengsb.version}</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
         <groupId>org.codehaus.jackson</groupId>
         <artifactId>jackson-core-asl</artifactId>
         <version>${jackson.version}</version>
@@ -178,6 +185,11 @@
         <artifactId>hamcrest-library</artifactId>
         <version>${hamcrest.version}</version>
         <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>com.google.guava</groupId>
+        <artifactId>guava</artifactId>
+        <version>${guava.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
