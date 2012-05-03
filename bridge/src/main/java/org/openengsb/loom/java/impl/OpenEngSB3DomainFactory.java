@@ -140,7 +140,6 @@ public class OpenEngSB3DomainFactory {
         ConnectorManager cm = getRemoteProxy(ConnectorManager.class, null);
         ConnectorDefinition def = ConnectorDefinition.generate("example", "external-connector-proxy");
         String queuename = def.getInstanceId();
-        queuename = "example-remote";
         Queue connectorIncQueue = session.createQueue(queuename);
         MessageConsumer createConsumer = session.createConsumer(connectorIncQueue);
         createConsumer.setMessageListener(new MessageListener() {
