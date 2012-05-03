@@ -65,20 +65,23 @@ public class OpenEngSB3DomainFactory {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OpenEngSB3DomainFactory.class);
 
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
     private Connection connection;
     private Session session;
 
     private MessageProducer receiveQueueProducer;
-
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-
-    private String identifier;
 
     private Queue replyQueue;
 
     private QueueMap<String, Message> replyMessageQueue = new QueueMap<String, Message>();
 
     public OpenEngSB3DomainFactory(String baseURL) throws JMSException {
+        initActiveMQ(baseURL);
+        initMainQueues();
+    }
+
+    private void initActiveMQ(String baseURL) throws JMSException {
         LOGGER.info("initializing domain factory for URL: {}", baseURL);
         ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(baseURL);
         LOGGER.info("creating connection");
@@ -87,8 +90,15 @@ public class OpenEngSB3DomainFactory {
         connection.start();
         LOGGER.info("creating session");
         session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-        LOGGER.info("creating receive-queue");
-        receiveQueueProducer = createProducerForQueue("receive");
+    }
+
+    private void initMainQueues() throws JMSException {
+        initReceiveQueue();
+        initReplyQueue();
+    }
+
+    private void initReplyQueue() throws JMSException {
+        String identifier;
         try {
             identifier = "CLIENT-" + InetAddress.getLocalHost().toString();
         } catch (UnknownHostException e) {
@@ -101,18 +111,22 @@ public class OpenEngSB3DomainFactory {
             @Override
             public void onMessage(Message message) {
                 LOGGER.info(message.toString());
+                String jmsCorrelationID;
                 try {
-                    replyMessageQueue.put(message.getJMSCorrelationID(), message);
+                    jmsCorrelationID = message.getJMSCorrelationID();
                 } catch (JMSException e) {
-                    throw new IllegalArgumentException(e);
+                    LOGGER.error("error processing the message", e);
+                    return;
                 }
+                replyMessageQueue.put(jmsCorrelationID, message);
             }
         });
     }
 
-    private MessageProducer createProducerForQueue(String name) throws JMSException {
-        Destination destination = session.createQueue(name);
-        return session.createProducer(destination);
+    private void initReceiveQueue() throws JMSException {
+        LOGGER.info("creating receive-queue");
+        Destination destination = session.createQueue("receive");
+        receiveQueueProducer =  session.createProducer(destination);
     }
 
     public void destroy() throws JMSException {
@@ -121,7 +135,7 @@ public class OpenEngSB3DomainFactory {
         connection.close();
     }
 
-    public <T extends Domain> String registerConnector(String domainType, final T connectorInstance)
+    public String registerConnector(String domainType, final Domain connectorInstance)
         throws ConnectorValidationFailedException, JMSException {
         ConnectorManager cm = getRemoteProxy(ConnectorManager.class, null);
         ConnectorDefinition def = ConnectorDefinition.generate("example", "external-connector-proxy");
