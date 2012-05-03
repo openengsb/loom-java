@@ -39,7 +39,6 @@ import javax.jms.MessageProducer;
 import javax.jms.Queue;
 import javax.jms.Session;
 import javax.jms.TextMessage;
-import javax.management.RuntimeErrorException;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -115,26 +114,6 @@ public class OpenEngSB3DomainFactory {
         Destination destination = session.createQueue(name);
         return session.createProducer(destination);
     }
-
-    private MessageConsumer createConsumerForQueue(String name) throws JMSException {
-        Destination queue = session.createQueue(name);
-        return session.createConsumer(queue);
-    }
-
-    private MessageConsumer createConsumerForQueue(String name, MessageListener listener) throws JMSException {
-        MessageConsumer result = createConsumerForQueue(name);
-        result.setMessageListener(listener);
-        return result;
-    }
-
-    // public void sendMessage(String queue, String message) throws JMSException {
-    // LOGGER.info("sending message {}", message);
-    // LOGGER.info("to queue {}", queue);
-    // TextMessage message2 = session.createTextMessage(message);
-    // MessageProducer resultProducer = createProducerForQueue(queue);
-    // resultProducer.send(message2);
-    //
-    // }
 
     public void destroy() throws JMSException {
         session.close();
