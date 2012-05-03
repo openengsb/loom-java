@@ -63,11 +63,16 @@ import com.google.common.collect.ImmutableMap;
 
 public class OpenEngSB3DomainFactory {
 
+    private final JmsMessageWrapper wrapper;
+
     private final class RemoteServiceHandler implements InvocationHandler {
         private final String serviceId;
 
-        private RemoteServiceHandler(String serviceId) {
+        private final JmsMessageWrapper wrapper;
+
+        public RemoteServiceHandler(String serviceId, JmsMessageWrapper wrapper) {
             this.serviceId = serviceId;
+            this.wrapper = wrapper;
         }
 
         @Override
@@ -77,23 +82,19 @@ public class OpenEngSB3DomainFactory {
             }
             MethodCall methodCall = createMethodCall(method, args, serviceId);
             SecureRequest wrapped = wrapMethodCall(methodCall);
-            String text = OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(wrapped);
-            LOGGER.info("sending: {}", text);
-            String resultString = sendTestAndGetResponse(text);
-            LOGGER.info("received response: {}", resultString);
-            SecureResponse response = OBJECT_MAPPER.readValue(resultString, SecureResponse.class);
+            SecureResponse response = sendTestAndGetResponse(wrapped);
             return response.getMessage().getResult().getArg();
         }
 
-        private String sendTestAndGetResponse(String text) throws JMSException, InterruptedException {
-            TextMessage message = session.createTextMessage(text);
+        private SecureResponse sendTestAndGetResponse(SecureRequest request) throws JMSException, InterruptedException,
+            IOException {
+            Message message = wrapper.marshal(request);
             String correlationId = UUID.randomUUID().toString();
             message.setJMSCorrelationID(correlationId);
             message.setJMSReplyTo(replyQueue);
             receiveQueueProducer.send(message);
             Message result = replyMessageQueue.poll(correlationId);
-            TextMessage textResult = (TextMessage) result;
-            return textResult.getText();
+            return wrapper.unmarshal(result, SecureResponse.class);
         }
 
         private SecureRequest wrapMethodCall(MethodCall methodCall) {
@@ -136,6 +137,7 @@ public class OpenEngSB3DomainFactory {
 
     public OpenEngSB3DomainFactory(String baseURL) throws JMSException {
         initActiveMQ(baseURL);
+        wrapper = new JmsJsonMessageWrapper(session);
         initMainQueues();
     }
 
@@ -293,7 +295,7 @@ public class OpenEngSB3DomainFactory {
     @SuppressWarnings("unchecked")
     public <T> T getRemoteProxy(Class<T> serviceType, final String serviceId) {
         return (T) Proxy.newProxyInstance(getClass().getClassLoader(), new Class<?>[]{ serviceType },
-            new RemoteServiceHandler(serviceId));
+            new RemoteServiceHandler(serviceId, wrapper));
     }
 
     public void unregisterConnector(Object connectorInstance) {
