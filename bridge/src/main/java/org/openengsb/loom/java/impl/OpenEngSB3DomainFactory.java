@@ -63,6 +63,64 @@ import com.google.common.collect.ImmutableMap;
 
 public class OpenEngSB3DomainFactory {
 
+    private final class RemoteServiceHandler implements InvocationHandler {
+        private final String serviceId;
+
+        private RemoteServiceHandler(String serviceId) {
+            this.serviceId = serviceId;
+        }
+
+        @Override
+        public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+            if (args == null) {
+                args = new Object[0];
+            }
+            MethodCall methodCall = createMethodCall(method, args, serviceId);
+            SecureRequest wrapped = wrapMethodCall(methodCall);
+            String text = OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(wrapped);
+            LOGGER.info("sending: {}", text);
+            String resultString = sendTestAndGetResponse(text);
+            LOGGER.info("received response: {}", resultString);
+            SecureResponse response = OBJECT_MAPPER.readValue(resultString, SecureResponse.class);
+            return response.getMessage().getResult().getArg();
+        }
+
+        private String sendTestAndGetResponse(String text) throws JMSException, InterruptedException {
+            TextMessage message = session.createTextMessage(text);
+            String correlationId = UUID.randomUUID().toString();
+            message.setJMSCorrelationID(correlationId);
+            message.setJMSReplyTo(replyQueue);
+            receiveQueueProducer.send(message);
+            Message result = replyMessageQueue.poll(correlationId);
+            TextMessage textResult = (TextMessage) result;
+            return textResult.getText();
+        }
+
+        private SecureRequest wrapMethodCall(MethodCall methodCall) {
+            MethodCallRequest methodCallRequest = new MethodCallRequest(methodCall);
+            methodCallRequest.setAnswer(true);
+            SecureRequest result =
+                SecureRequest.create(methodCallRequest, "admin", BeanDescription.fromObject(new Password("password")));
+            return result;
+        }
+
+        private MethodCall createMethodCall(Method method, Object[] args, String serviceId) {
+            MethodCall methodCall = new MethodCall(method.getName(), args);
+            Map<String, String> metadata = new HashMap<String, String>();
+            if (serviceId != null) {
+                metadata.put("serviceFilter",
+                    String.format("(&(%s=%s)(%s=%s))", Constants.OBJECTCLASS, method.getDeclaringClass().getName(),
+                        "id", serviceId));
+            } else {
+                metadata.put("serviceFilter",
+                    String.format("(%s=%s)", Constants.OBJECTCLASS, method.getDeclaringClass().getName()));
+            }
+
+            methodCall.setMetaData(metadata);
+            return methodCall;
+        }
+    }
+
     private static final Logger LOGGER = LoggerFactory.getLogger(OpenEngSB3DomainFactory.class);
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
@@ -126,7 +184,7 @@ public class OpenEngSB3DomainFactory {
     private void initReceiveQueue() throws JMSException {
         LOGGER.info("creating receive-queue");
         Destination destination = session.createQueue("receive");
-        receiveQueueProducer =  session.createProducer(destination);
+        receiveQueueProducer = session.createProducer(destination);
     }
 
     public void destroy() throws JMSException {
@@ -230,54 +288,12 @@ public class OpenEngSB3DomainFactory {
 
         cm.create(def, new ConnectorDescription(attr, props));
         return def.getInstanceId();
-        // return queuename;
     }
 
     @SuppressWarnings("unchecked")
     public <T> T getRemoteProxy(Class<T> serviceType, final String serviceId) {
         return (T) Proxy.newProxyInstance(getClass().getClassLoader(), new Class<?>[]{ serviceType },
-            new InvocationHandler() {
-                @Override
-                public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-                    if (args == null) {
-                        args = new Object[0];
-                    }
-                    String text = marshal(method, args, serviceId);
-                    LOGGER.info("sending: {}", text);
-                    TextMessage message = session.createTextMessage(text);
-                    String correlationId = UUID.randomUUID().toString();
-                    message.setJMSCorrelationID(correlationId);
-                    message.setJMSReplyTo(replyQueue);
-                    receiveQueueProducer.send(message);
-                    Thread.sleep(1000);
-                    Message result = replyMessageQueue.poll(correlationId);
-                    TextMessage textResult = (TextMessage) result;
-                    String resultString = textResult.getText();
-                    LOGGER.info("received response: {}", resultString);
-                    SecureResponse response = OBJECT_MAPPER.readValue(resultString, SecureResponse.class);
-                    return response.getMessage().getResult().getArg();
-                }
-            });
-    }
-
-    private String marshal(Method method, Object[] args, String serviceId) throws IOException {
-        MethodCall methodCall = new MethodCall(method.getName(), args);
-        Map<String, String> metadata = new HashMap<String, String>();
-        if (serviceId != null) {
-            metadata.put("serviceFilter",
-                String.format("(&(%s=%s)(%s=%s))", Constants.OBJECTCLASS, method.getDeclaringClass().getName(),
-                    "id", serviceId));
-        } else {
-            metadata.put("serviceFilter",
-                String.format("(%s=%s)", Constants.OBJECTCLASS, method.getDeclaringClass().getName()));
-        }
-
-        methodCall.setMetaData(metadata);
-        MethodCallRequest methodCallRequest = new MethodCallRequest(methodCall);
-        methodCallRequest.setAnswer(true);
-        SecureRequest create =
-            SecureRequest.create(methodCallRequest, "admin", BeanDescription.fromObject(new Password("password")));
-        return OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(create);
+            new RemoteServiceHandler(serviceId));
     }
 
     public void unregisterConnector(Object connectorInstance) {
