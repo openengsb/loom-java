@@ -11,7 +11,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.openengsb.core.api.ConnectorManager;
-import org.openengsb.core.api.model.ConnectorDefinition;
 import org.openengsb.core.api.model.ConnectorDescription;
 import org.openengsb.core.api.security.service.UserDataManager;
 import org.openengsb.domain.example.ExampleDomain;
@@ -45,19 +44,19 @@ public class ConnectorManagerUT {
     @Test
     public void createConnector() throws Exception {
         ConnectorManager cm = domainFactory.getRemoteProxy(ConnectorManager.class, null);
-        ConnectorDefinition connectorDefinition = new ConnectorDefinition("example", "example", "test2");
-        ConnectorDescription connectorDescription = new ConnectorDescription(
+        ConnectorDescription connectorDescription = new ConnectorDescription("example", "example",
             ImmutableMap.of("prefix", "<><>", "level", "info"),
             new HashMap<String, Object>());
-        cm.create(connectorDefinition, connectorDescription);
+        cm.create(connectorDescription);
     }
+
 
     @Test
     public void createConnectorProxy() throws Exception {
         ExampleDomain handler = new ExampleConnector();
         String uuid = domainFactory.registerConnector("example", handler);
         ExampleDomain self =
-            domainFactory.getRemoteProxy(ExampleDomain.class, "example+external-connector-proxy+" + uuid);
+            domainFactory.getRemoteProxy(ExampleDomain.class, uuid);
         assertThat(self.doSomethingWithMessage("asdf"), is("42"));
     }
 }

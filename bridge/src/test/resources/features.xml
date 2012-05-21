@@ -22,7 +22,7 @@
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://karaf.apache.org/xmlns/features/v1.0.0 http://karaf.apache.org/xmlns/features/v1.0.0" >
 
-  <feature name="loom-java-test" version="{openengsb.version}" description="Features for loom-java-tests">
+  <feature name="loom-java-test" version="{openengsb.version}" description="Features for loom-java-tests" install="auto">
       <feature>openengsb-framework</feature>
       <feature>openengsb-ports-jms</feature>
       <feature>openengsb-connector-example</feature>

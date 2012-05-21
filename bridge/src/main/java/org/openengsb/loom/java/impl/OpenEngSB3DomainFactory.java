@@ -47,7 +47,6 @@ import org.openengsb.core.api.ConnectorManager;
 import org.openengsb.core.api.ConnectorValidationFailedException;
 import org.openengsb.core.api.Domain;
 import org.openengsb.core.api.model.BeanDescription;
-import org.openengsb.core.api.model.ConnectorDefinition;
 import org.openengsb.core.api.model.ConnectorDescription;
 import org.openengsb.core.api.remote.MethodCall;
 import org.openengsb.core.api.remote.MethodCallRequest;
@@ -198,8 +197,7 @@ public class OpenEngSB3DomainFactory {
     public String registerConnector(String domainType, final Domain connectorInstance)
         throws ConnectorValidationFailedException, JMSException {
         ConnectorManager cm = getRemoteProxy(ConnectorManager.class, null);
-        ConnectorDefinition def = ConnectorDefinition.generate("example", "external-connector-proxy");
-        String queuename = def.getInstanceId();
+        String queuename = UUID.randomUUID().toString();
         Queue connectorIncQueue = session.createQueue(queuename);
         MessageConsumer createConsumer = session.createConsumer(connectorIncQueue);
         createConsumer.setMessageListener(new MessageListener() {
@@ -285,11 +283,10 @@ public class OpenEngSB3DomainFactory {
         String destination = "tcp://127.0.0.1:6549?" + queuename;
         Map<String, String> attr =
             ImmutableMap.of("portId", "jms-json", "destination", destination, "serviceId",
-                def.getInstanceId());
+                queuename);
         Map<String, Object> props = ImmutableMap.of();
-
-        cm.create(def, new ConnectorDescription(attr, props));
-        return def.getInstanceId();
+        cm.createWithId(queuename, new ConnectorDescription("example", "external-connector-proxy", attr, props));
+        return queuename;
     }
 
     @SuppressWarnings("unchecked")

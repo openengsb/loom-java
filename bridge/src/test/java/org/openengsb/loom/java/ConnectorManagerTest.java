@@ -2,6 +2,8 @@ package org.openengsb.loom.java;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.zip.ZipEntry;
@@ -11,7 +13,6 @@ import org.apache.commons.io.FileUtils;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.rules.TemporaryFolder;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,7 +48,21 @@ public class ConnectorManagerTest extends ConnectorManagerUT {
         ProcessBuilder pb = new ProcessBuilder(executable.getAbsolutePath());
         LOGGER.info("startup openengsb");
         process = pb.start();
-        Thread.sleep(30000);
+        URL url = new URL("http://localhost:8090/openengsb/");
+        while (true) {
+            try {
+                URLConnection openConnection = url.openConnection();
+                openConnection.connect();
+                System.out.println(openConnection.getContent());
+                System.out.println(openConnection.getContentType());
+            } catch (Exception e) {
+                Thread.sleep(300);
+                System.out.println("openengsb is not ready yet. " + e.getClass().getName() + " - " + e.getMessage());
+                continue;
+            }
+            break;
+        }
+        System.out.println("starting");
     }
 
     @AfterClass
