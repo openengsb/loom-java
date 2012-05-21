@@ -22,25 +22,19 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import javax.jms.Connection;
-import javax.jms.Destination;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageConsumer;
 import javax.jms.MessageListener;
 import javax.jms.MessageProducer;
 import javax.jms.Queue;
-import javax.jms.Session;
 import javax.jms.TextMessage;
 
-import org.apache.activemq.ActiveMQConnectionFactory;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.openengsb.connector.usernamepassword.Password;
 import org.openengsb.core.api.ConnectorManager;
@@ -61,8 +55,6 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.ImmutableMap;
 
 public class OpenEngSB3DomainFactory {
-
-    private final JmsMessageWrapper wrapper;
 
     private final class RemoteServiceHandler implements InvocationHandler {
         private final String serviceId;
@@ -90,9 +82,9 @@ public class OpenEngSB3DomainFactory {
             Message message = wrapper.marshal(request);
             String correlationId = UUID.randomUUID().toString();
             message.setJMSCorrelationID(correlationId);
-            message.setJMSReplyTo(replyQueue);
-            receiveQueueProducer.send(message);
-            Message result = replyMessageQueue.poll(correlationId);
+            message.setJMSReplyTo(jmsConfig.replyQueue);
+            jmsConfig.receiveQueueProducer.send(message);
+            Message result = jmsConfig.replyMessageQueue.poll(correlationId);
             return wrapper.unmarshal(result, SecureResponse.class);
         }
 
@@ -125,81 +117,18 @@ public class OpenEngSB3DomainFactory {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
-    private Connection connection;
-    private Session session;
+    private JmsConfig jmsConfig;
 
-    private MessageProducer receiveQueueProducer;
-
-    private Queue replyQueue;
-
-    private QueueMap<String, Message> replyMessageQueue = new QueueMap<String, Message>();
-
-    public OpenEngSB3DomainFactory(String baseURL) throws JMSException {
-        initActiveMQ(baseURL);
-        wrapper = new JmsJsonMessageWrapper(session);
-        initMainQueues();
-    }
-
-    private void initActiveMQ(String baseURL) throws JMSException {
-        LOGGER.info("initializing domain factory for URL: {}", baseURL);
-        ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(baseURL);
-        LOGGER.info("creating connection");
-        connection = connectionFactory.createConnection();
-        LOGGER.info("starting connection");
-        connection.start();
-        LOGGER.info("creating session");
-        session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-    }
-
-    private void initMainQueues() throws JMSException {
-        initReceiveQueue();
-        initReplyQueue();
-    }
-
-    private void initReplyQueue() throws JMSException {
-        String identifier;
-        try {
-            identifier = "CLIENT-" + InetAddress.getLocalHost().toString();
-        } catch (UnknownHostException e) {
-            throw new IllegalStateException(e);
-        }
-        replyQueue = session.createQueue(identifier);
-        MessageConsumer consumer = session.createConsumer(replyQueue);
-        LOGGER.info("listening on queue {}", replyQueue);
-        consumer.setMessageListener(new MessageListener() {
-            @Override
-            public void onMessage(Message message) {
-                LOGGER.info(message.toString());
-                String jmsCorrelationID;
-                try {
-                    jmsCorrelationID = message.getJMSCorrelationID();
-                } catch (JMSException e) {
-                    LOGGER.error("error processing the message", e);
-                    return;
-                }
-                replyMessageQueue.put(jmsCorrelationID, message);
-            }
-        });
-    }
-
-    private void initReceiveQueue() throws JMSException {
-        LOGGER.info("creating receive-queue");
-        Destination destination = session.createQueue("receive");
-        receiveQueueProducer = session.createProducer(destination);
-    }
-
-    public void destroy() throws JMSException {
-        session.close();
-        connection.stop();
-        connection.close();
+    public OpenEngSB3DomainFactory(JmsConfig config) throws JMSException {
+        jmsConfig = config;
     }
 
     public String registerConnector(String domainType, final Domain connectorInstance)
         throws ConnectorValidationFailedException, JMSException {
         ConnectorManager cm = getRemoteProxy(ConnectorManager.class, null);
         String queuename = UUID.randomUUID().toString();
-        Queue connectorIncQueue = session.createQueue(queuename);
-        MessageConsumer createConsumer = session.createConsumer(connectorIncQueue);
+        Queue connectorIncQueue = jmsConfig.session.createQueue(queuename);
+        MessageConsumer createConsumer = jmsConfig.session.createConsumer(connectorIncQueue);
         createConsumer.setMessageListener(new MessageListener() {
             @Override
             public void onMessage(Message message) {
@@ -263,15 +192,15 @@ public class OpenEngSB3DomainFactory {
                 }
                 Queue createQueue;
                 try {
-                    createQueue = session.createQueue(callId);
+                    createQueue = jmsConfig.session.createQueue(callId);
                 } catch (JMSException e) {
                     LOGGER.error("error creating result-queue", e);
                     return;
                 }
                 MessageProducer producer;
                 try {
-                    producer = session.createProducer(createQueue);
-                    producer.send(session.createTextMessage(json));
+                    producer = jmsConfig.session.createProducer(createQueue);
+                    producer.send(jmsConfig.session.createTextMessage(json));
                 } catch (JMSException e) {
                     LOGGER.error("error creating result-queue", e);
                     return;
@@ -292,7 +221,7 @@ public class OpenEngSB3DomainFactory {
     @SuppressWarnings("unchecked")
     public <T> T getRemoteProxy(Class<T> serviceType, final String serviceId) {
         return (T) Proxy.newProxyInstance(getClass().getClassLoader(), new Class<?>[]{ serviceType },
-            new RemoteServiceHandler(serviceId, wrapper));
+            new RemoteServiceHandler(serviceId, jmsConfig.wrapper));
     }
 
     public void unregisterConnector(Object connectorInstance) {
