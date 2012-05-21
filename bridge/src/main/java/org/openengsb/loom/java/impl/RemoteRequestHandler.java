@@ -21,8 +21,6 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 import org.openengsb.core.api.Domain;
 import org.openengsb.core.api.remote.MethodCall;
@@ -35,8 +33,6 @@ public class RemoteRequestHandler<T extends Domain> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RemoteRequestHandler.class);
     private T connector;
-
-    private Map<MethodCall, MethodResult> invocationHistory = new LinkedHashMap<MethodCall, MethodResult>();
 
     public MethodResult process(MethodCall request) {
         Class<?>[] argTypes = getArgTypes(request);
@@ -57,7 +53,6 @@ public class RemoteRequestHandler<T extends Domain> {
             }
             LOGGER.debug("invocation successful");
             MethodResult methodResult = new MethodResult(result);
-            invocationHistory.put(request, methodResult);
             return methodResult;
         } catch (InvocationTargetException e) {
             return makeExceptionResult((Exception) e.getTargetException());
@@ -67,7 +62,7 @@ public class RemoteRequestHandler<T extends Domain> {
             return makeExceptionResult(new IllegalStateException(e));
         }
     }
-    
+
     private Class<?>[] getArgTypes(MethodCall call) {
         Object[] args = call.getArgs();
         Class<?>[] types = new Class<?>[args.length];
@@ -82,9 +77,5 @@ public class RemoteRequestHandler<T extends Domain> {
         StringWriter sw = new StringWriter();
         e.printStackTrace(new PrintWriter(sw));
         return new MethodResult(sw.toString(), ReturnType.Exception);
-    }
-
-    public Map<MethodCall, MethodResult> getInvocationHistory() {
-        return invocationHistory;
     }
 }
