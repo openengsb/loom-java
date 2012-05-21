@@ -27,17 +27,13 @@ import org.openengsb.core.api.ConnectorValidationFailedException;
 import org.openengsb.core.api.Domain;
 import org.openengsb.core.api.model.ConnectorConfiguration;
 import org.openengsb.core.api.model.ConnectorDescription;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class OpenEngSB3DomainFactory {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(OpenEngSB3DomainFactory.class);
+    private ProtocolHandler remoteConfig;
 
-    private RemoteConfig jmsConfig;
-
-    public OpenEngSB3DomainFactory(RemoteConfig config) throws JMSException {
-        jmsConfig = config;
+    public OpenEngSB3DomainFactory(ProtocolHandler remoteConfig) throws JMSException {
+        this.remoteConfig = remoteConfig;
     }
 
     public String registerConnector(String domainType, Domain connectorInstance)
@@ -47,7 +43,7 @@ public class OpenEngSB3DomainFactory {
         ConnectorDescription connectorDescription = new ConnectorDescription(
             domainType, "external-connector-proxy",
             new HashMap<String, String>(), new HashMap<String, Object>());
-        ConnectorConfiguration config = jmsConfig.createConnectorHandler(remoteRequestHandler,
+        ConnectorConfiguration config = remoteConfig.createConnectorHandler(remoteRequestHandler,
             connectorDescription);
         ConnectorManager cm = getRemoteProxy(ConnectorManager.class, null);
         cm.createWithId(config.getConnectorId(), config.getContent());
@@ -56,7 +52,7 @@ public class OpenEngSB3DomainFactory {
 
     @SuppressWarnings("unchecked")
     public <T> T getRemoteProxy(Class<T> serviceType, final String serviceId) {
-        RequestHandler requestHandler = jmsConfig.createRequestHandler();
+        RequestHandler requestHandler = remoteConfig.createOutgoingRequestHandler();
         return (T) Proxy.newProxyInstance(getClass().getClassLoader(), new Class<?>[]{ serviceType },
             new RemoteServiceHandler(serviceId, requestHandler));
     }

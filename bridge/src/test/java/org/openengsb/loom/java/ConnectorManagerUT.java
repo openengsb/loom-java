@@ -15,7 +15,7 @@ import org.openengsb.core.api.model.ConnectorDescription;
 import org.openengsb.core.api.security.service.UserDataManager;
 import org.openengsb.domain.example.ExampleDomain;
 import org.openengsb.loom.java.impl.OpenEngSB3DomainFactory;
-import org.openengsb.loom.java.impl.jms.JmsConfig;
+import org.openengsb.loom.java.impl.jms.JmsProtocolHandler;
 
 import com.google.common.collect.ImmutableMap;
 
@@ -25,11 +25,11 @@ public class ConnectorManagerUT {
 
     private static final String baseURL = "failover:(tcp://localhost:6549)?timeout=6000";
 
-    private JmsConfig jmsConfig;
+    private JmsProtocolHandler jmsConfig;
 
     @Before
     public void setUp() throws Exception {
-        jmsConfig = new JmsConfig(baseURL);
+        jmsConfig = new JmsProtocolHandler(baseURL);
         domainFactory = new OpenEngSB3DomainFactory(jmsConfig);
     }
 
