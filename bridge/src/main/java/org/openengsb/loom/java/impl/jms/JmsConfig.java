@@ -20,13 +20,14 @@ import org.openengsb.core.api.model.ConnectorConfiguration;
 import org.openengsb.core.api.model.ConnectorDescription;
 import org.openengsb.loom.java.impl.LocalRequestHandler;
 import org.openengsb.loom.java.impl.QueueMap;
+import org.openengsb.loom.java.impl.RemoteConfig;
 import org.openengsb.loom.java.impl.RequestHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ImmutableMap;
 
-public class JmsConfig {
+public class JmsConfig implements RemoteConfig {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JmsConfig.class);
 
@@ -102,10 +103,12 @@ public class JmsConfig {
         connection.close();
     }
 
+    @Override
     public RequestHandler createRequestHandler() {
         return new JmsRemoteRequestHandler(this);
     }
 
+    @Override
     public ConnectorConfiguration createConnectorHandler(LocalRequestHandler remoteRequestHandler,
             ConnectorDescription connectorDescription) {
         String queuename = UUID.randomUUID().toString();

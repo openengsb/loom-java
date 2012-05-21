@@ -27,7 +27,6 @@ import org.openengsb.core.api.ConnectorValidationFailedException;
 import org.openengsb.core.api.Domain;
 import org.openengsb.core.api.model.ConnectorConfiguration;
 import org.openengsb.core.api.model.ConnectorDescription;
-import org.openengsb.loom.java.impl.jms.JmsConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,9 +34,9 @@ public class OpenEngSB3DomainFactory {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OpenEngSB3DomainFactory.class);
 
-    private JmsConfig jmsConfig;
+    private RemoteConfig jmsConfig;
 
-    public OpenEngSB3DomainFactory(JmsConfig config) throws JMSException {
+    public OpenEngSB3DomainFactory(RemoteConfig config) throws JMSException {
         jmsConfig = config;
     }
 
