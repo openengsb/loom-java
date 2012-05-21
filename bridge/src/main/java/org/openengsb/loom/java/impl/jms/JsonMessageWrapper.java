@@ -8,8 +8,12 @@ import javax.jms.Session;
 import javax.jms.TextMessage;
 
 import org.codehaus.jackson.map.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class JsonMessageWrapper implements MessageWrapper {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(JsonMessageWrapper.class);
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
@@ -28,6 +32,12 @@ public class JsonMessageWrapper implements MessageWrapper {
     @Override
     public <T> T unmarshal(Message message, Class<T> type) throws IOException, JMSException {
         String text = ((TextMessage) message).getText();
-        return OBJECT_MAPPER.readValue(text, type);
+        try {
+            return OBJECT_MAPPER.readValue(text, type);
+        } catch (IOException e) {
+            LOGGER.error("cannot parse: {}", text);
+            LOGGER.error("because", e);
+            throw e;
+        }
     }
 }

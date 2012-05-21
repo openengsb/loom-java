@@ -38,32 +38,29 @@ public class LocalRequestHandler {
     }
 
     public MethodResult process(MethodCall request) {
+        try {
+            return doProcess(request);
+        } catch (Exception e) {
+            return makeExceptionResult(e);
+        }
+    }
+
+    private MethodResult doProcess(MethodCall request) throws Exception {
         Class<?>[] argTypes = getArgTypes(request);
-        Method method;
+        LOGGER.debug("searching for method {} with args {}", request.getMethodName(), argTypes);
+        Method method = connector.getClass().getMethod(request.getMethodName(), argTypes);
+        LOGGER.info("invoking method {}", method);
+        Object result;
         try {
-            LOGGER.debug("searching for method {} with args {}", request.getMethodName(), argTypes);
-            method = connector.getClass().getMethod(request.getMethodName(), argTypes);
-        } catch (NoSuchMethodException e) {
-            return makeExceptionResult(e);
-        }
-        try {
-            LOGGER.info("invoking method {}", method);
-            Object result = method.invoke(connector, request.getArgs());
-            if (method.getReturnType().equals(void.class)) {
-                MethodResult methodResult = new MethodResult();
-                methodResult.setType(ReturnType.Void);
-                return methodResult;
-            }
-            LOGGER.debug("invocation successful");
-            MethodResult methodResult = new MethodResult(result);
-            return methodResult;
+            result = method.invoke(connector, request.getArgs());
         } catch (InvocationTargetException e) {
-            return makeExceptionResult((Exception) e.getTargetException());
-        } catch (IllegalArgumentException e) {
-            return makeExceptionResult(e);
-        } catch (IllegalAccessException e) {
-            return makeExceptionResult(new IllegalStateException(e));
+            throw (Exception) e.getTargetException();
         }
+        if (method.getReturnType().equals(void.class)) {
+            return MethodResult.newVoidResult();
+        }
+        LOGGER.debug("invocation successful");
+        return new MethodResult(result);
     }
 
     private Class<?>[] getArgTypes(MethodCall call) {
