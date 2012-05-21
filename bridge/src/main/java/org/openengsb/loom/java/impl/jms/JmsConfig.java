@@ -1,7 +1,9 @@
-package org.openengsb.loom.java.impl;
+package org.openengsb.loom.java.impl.jms;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Map;
+import java.util.UUID;
 
 import javax.jms.Connection;
 import javax.jms.Destination;
@@ -14,14 +16,21 @@ import javax.jms.Queue;
 import javax.jms.Session;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
+import org.openengsb.core.api.model.ConnectorConfiguration;
+import org.openengsb.core.api.model.ConnectorDescription;
+import org.openengsb.loom.java.impl.LocalRequestHandler;
+import org.openengsb.loom.java.impl.QueueMap;
+import org.openengsb.loom.java.impl.RequestHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.collect.ImmutableMap;
 
 public class JmsConfig {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JmsConfig.class);
 
-    Connection connection;
+    private Connection connection;
     Session session;
 
     MessageProducer receiveQueueProducer;
@@ -30,11 +39,11 @@ public class JmsConfig {
 
     QueueMap<String, Message> replyMessageQueue = new QueueMap<String, Message>();
 
-    JmsMessageWrapper wrapper;
+    MessageWrapper wrapper;
 
-    public JmsConfig(String baseURL) throws JMSException{
+    public JmsConfig(String baseURL) throws JMSException {
         initActiveMQ(baseURL);
-        wrapper = new JmsJsonMessageWrapper(session);
+        wrapper = new JsonMessageWrapper(session);
         initMainQueues();
     }
 
@@ -78,6 +87,7 @@ public class JmsConfig {
                 replyMessageQueue.put(jmsCorrelationID, message);
             }
         });
+
     }
 
     private void initReceiveQueue() throws JMSException {
@@ -90,6 +100,27 @@ public class JmsConfig {
         session.close();
         connection.stop();
         connection.close();
+    }
+
+    public RequestHandler createRequestHandler() {
+        return new JmsRemoteRequestHandler(this);
+    }
+
+    public ConnectorConfiguration createConnectorHandler(LocalRequestHandler remoteRequestHandler,
+            ConnectorDescription connectorDescription) {
+        String queuename = UUID.randomUUID().toString();
+        try {
+            Queue connectorIncQueue = session.createQueue(queuename);
+            MessageConsumer createConsumer = session.createConsumer(connectorIncQueue);
+            createConsumer.setMessageListener(new ConnectorMessageListener(remoteRequestHandler, this));
+        } catch (JMSException e) {
+            throw new RuntimeException(e);
+        }
+        String destination = "tcp://127.0.0.1:6549?" + queuename;
+        Map<String, String> attr =
+            ImmutableMap.of("portId", "jms-json", "destination", destination, "serviceId", queuename);
+        connectorDescription.setAttributes(attr);
+        return new ConnectorConfiguration(queuename, connectorDescription);
     }
 
 }

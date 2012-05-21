@@ -14,8 +14,8 @@ import org.openengsb.core.api.ConnectorManager;
 import org.openengsb.core.api.model.ConnectorDescription;
 import org.openengsb.core.api.security.service.UserDataManager;
 import org.openengsb.domain.example.ExampleDomain;
-import org.openengsb.loom.java.impl.JmsConfig;
 import org.openengsb.loom.java.impl.OpenEngSB3DomainFactory;
+import org.openengsb.loom.java.impl.jms.JmsConfig;
 
 import com.google.common.collect.ImmutableMap;
 
@@ -54,13 +54,11 @@ public class ConnectorManagerUT {
         cm.create(connectorDescription);
     }
 
-
     @Test
     public void createConnectorProxy() throws Exception {
         ExampleDomain handler = new ExampleConnector();
         String uuid = domainFactory.registerConnector("example", handler);
-        ExampleDomain self =
-            domainFactory.getRemoteProxy(ExampleDomain.class, uuid);
+        ExampleDomain self = domainFactory.getRemoteProxy(ExampleDomain.class, uuid);
         assertThat(self.doSomethingWithMessage("asdf"), is("42"));
     }
 }

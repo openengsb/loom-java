@@ -1,11 +1,11 @@
-package org.openengsb.loom.java.impl;
+package org.openengsb.loom.java.impl.jms;
 
 import java.io.IOException;
 
 import javax.jms.JMSException;
 import javax.jms.Message;
 
-public interface JmsMessageWrapper {
+public interface MessageWrapper {
 
     Message marshal(Object o) throws IOException, JMSException;
 

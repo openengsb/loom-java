@@ -1,4 +1,4 @@
-package org.openengsb.loom.java.impl;
+package org.openengsb.loom.java.impl.jms;
 
 import java.io.IOException;
 
@@ -9,13 +9,13 @@ import javax.jms.TextMessage;
 
 import org.codehaus.jackson.map.ObjectMapper;
 
-public class JmsJsonMessageWrapper implements JmsMessageWrapper {
+public class JsonMessageWrapper implements MessageWrapper {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private Session session;
 
-    public JmsJsonMessageWrapper(Session session) {
+    public JsonMessageWrapper(Session session) {
         this.session = session;
     }
 

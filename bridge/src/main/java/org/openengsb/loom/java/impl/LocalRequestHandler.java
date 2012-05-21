@@ -22,17 +22,20 @@ import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-import org.openengsb.core.api.Domain;
 import org.openengsb.core.api.remote.MethodCall;
 import org.openengsb.core.api.remote.MethodResult;
 import org.openengsb.core.api.remote.MethodResult.ReturnType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class RemoteRequestHandler<T extends Domain> {
+public class LocalRequestHandler {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(RemoteRequestHandler.class);
-    private T connector;
+    private static final Logger LOGGER = LoggerFactory.getLogger(LocalRequestHandler.class);
+    private Object connector;
+
+    public LocalRequestHandler(Object connector) {
+        this.connector = connector;
+    }
 
     public MethodResult process(MethodCall request) {
         Class<?>[] argTypes = getArgTypes(request);

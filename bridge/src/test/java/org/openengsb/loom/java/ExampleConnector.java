@@ -1,12 +1,13 @@
 package org.openengsb.loom.java;
 
 import org.openengsb.core.api.AliveState;
+import org.openengsb.core.api.Connector;
 import org.openengsb.domain.example.ExampleDomain;
 import org.openengsb.domain.example.event.LogEvent;
 import org.openengsb.domain.example.model.ExampleRequestModel;
 import org.openengsb.domain.example.model.ExampleResponseModel;
 
-public class ExampleConnector implements ExampleDomain {
+public class ExampleConnector implements ExampleDomain, Connector {
     @Override
     public String getInstanceId() {
         // TODO Auto-generated method stub
@@ -39,5 +40,29 @@ public class ExampleConnector implements ExampleDomain {
     public String doSomethingWithEnum(ExampleEnum arg0) {
         // TODO Auto-generated method stub
         return null;
+    }
+
+    @Override
+    public String getConnectorId() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public String getDomainId() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public void setConnectorId(String arg0) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void setDomainId(String arg0) {
+        // TODO Auto-generated method stub
+
     }
 }
