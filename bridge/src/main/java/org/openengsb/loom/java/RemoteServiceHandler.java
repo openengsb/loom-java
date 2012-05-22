@@ -1,4 +1,4 @@
-package org.openengsb.loom.java.impl;
+package org.openengsb.loom.java;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.openengsb.loom.java.impl;
+package org.openengsb.loom.java;
 
 import java.lang.reflect.Proxy;
 import java.util.HashMap;
@@ -28,11 +28,11 @@ import org.openengsb.core.api.Domain;
 import org.openengsb.core.api.model.ConnectorConfiguration;
 import org.openengsb.core.api.model.ConnectorDescription;
 
-public class OpenEngSB3DomainFactory {
+public class ProxyConnectorFactory {
 
     private ProtocolHandler remoteConfig;
 
-    public OpenEngSB3DomainFactory(ProtocolHandler remoteConfig) throws JMSException {
+    public ProxyConnectorFactory(ProtocolHandler remoteConfig) throws JMSException {
         this.remoteConfig = remoteConfig;
     }
 

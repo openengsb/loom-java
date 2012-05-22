@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.openengsb.loom.java.impl;
+package org.openengsb.loom.java;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;

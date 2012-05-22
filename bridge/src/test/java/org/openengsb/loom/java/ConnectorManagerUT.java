@@ -14,14 +14,14 @@ import org.openengsb.core.api.ConnectorManager;
 import org.openengsb.core.api.model.ConnectorDescription;
 import org.openengsb.core.api.security.service.UserDataManager;
 import org.openengsb.domain.example.ExampleDomain;
-import org.openengsb.loom.java.impl.OpenEngSB3DomainFactory;
-import org.openengsb.loom.java.impl.jms.JmsProtocolHandler;
+import org.openengsb.loom.java.ProxyConnectorFactory;
+import org.openengsb.loom.java.jms.JmsProtocolHandler;
 
 import com.google.common.collect.ImmutableMap;
 
 public class ConnectorManagerUT {
 
-    private OpenEngSB3DomainFactory domainFactory;
+    private ProxyConnectorFactory domainFactory;
 
     private static final String baseURL = "failover:(tcp://localhost:6549)?timeout=6000";
 
@@ -30,7 +30,7 @@ public class ConnectorManagerUT {
     @Before
     public void setUp() throws Exception {
         jmsConfig = new JmsProtocolHandler(baseURL);
-        domainFactory = new OpenEngSB3DomainFactory(jmsConfig);
+        domainFactory = new ProxyConnectorFactory(jmsConfig);
     }
 
     @After

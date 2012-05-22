@@ -1,4 +1,4 @@
-package org.openengsb.loom.java.impl;
+package org.openengsb.loom.java;
 
 import org.openengsb.core.api.model.ConnectorConfiguration;
 import org.openengsb.core.api.model.ConnectorDescription;

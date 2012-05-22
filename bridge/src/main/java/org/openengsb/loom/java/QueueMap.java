@@ -1,4 +1,4 @@
-package org.openengsb.loom.java.impl;
+package org.openengsb.loom.java;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
