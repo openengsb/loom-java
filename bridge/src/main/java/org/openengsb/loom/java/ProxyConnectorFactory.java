@@ -20,8 +20,6 @@ package org.openengsb.loom.java;
 import java.lang.reflect.Proxy;
 import java.util.HashMap;
 
-import javax.jms.JMSException;
-
 import org.openengsb.core.api.ConnectorManager;
 import org.openengsb.core.api.ConnectorValidationFailedException;
 import org.openengsb.core.api.Domain;
@@ -32,7 +30,7 @@ public class ProxyConnectorFactory {
 
     private ProtocolHandler remoteConfig;
 
-    public ProxyConnectorFactory(ProtocolHandler remoteConfig) throws JMSException {
+    public ProxyConnectorFactory(ProtocolHandler remoteConfig) {
         this.remoteConfig = remoteConfig;
     }
 
@@ -46,7 +44,7 @@ public class ProxyConnectorFactory {
     }
 
     public String createConnector(String domainType, Domain connectorInstance)
-        throws ConnectorValidationFailedException, JMSException {
+        throws ConnectorValidationFailedException {
 
         LocalRequestHandler remoteRequestHandler = new LocalRequestHandler(connectorInstance);
         ConnectorDescription connectorDescription = new ConnectorDescription(
