@@ -156,10 +156,14 @@ public class JmsProtocolHandler implements ProtocolHandler {
         receiveQueueProducer = session.createProducer(destination);
     }
 
-    public void destroy() throws JMSException {
-        session.close();
-        connection.stop();
-        connection.close();
+    public void destroy() {
+        try {
+            session.close();
+            connection.stop();
+            connection.close();
+        } catch (JMSException e) {
+            LOGGER.error("error while destroying jms-connections", e);
+        }
     }
 
     @Override

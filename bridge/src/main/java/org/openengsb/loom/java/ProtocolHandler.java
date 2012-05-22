@@ -9,4 +9,6 @@ public interface ProtocolHandler {
 
     RequestHandler createOutgoingRequestHandler();
 
+    void destroy();
+
 }
