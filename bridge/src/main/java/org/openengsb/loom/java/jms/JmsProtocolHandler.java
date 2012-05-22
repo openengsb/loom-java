@@ -27,8 +27,8 @@ import org.openengsb.core.api.security.model.SecureRequest;
 import org.openengsb.core.api.security.model.SecureResponse;
 import org.openengsb.loom.java.LocalRequestHandler;
 import org.openengsb.loom.java.ProtocolHandler;
-import org.openengsb.loom.java.QueueMap;
 import org.openengsb.loom.java.RequestHandler;
+import org.openengsb.loom.java.util.QueueMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
