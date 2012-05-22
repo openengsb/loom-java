@@ -65,6 +65,9 @@ public class LocalRequestHandler {
 
     private Class<?>[] getArgTypes(MethodCall call) {
         Object[] args = call.getArgs();
+        if(args==null){
+            return new Class<?>[0];
+        }
         Class<?>[] types = new Class<?>[args.length];
         for (int i = 0; i < args.length; i++) {
             types[i] = args[i].getClass();
