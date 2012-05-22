@@ -36,28 +36,36 @@ public class OpenEngSB3DomainFactory {
         this.remoteConfig = remoteConfig;
     }
 
-    public String registerConnector(String domainType, Domain connectorInstance)
+    @SuppressWarnings("unchecked")
+    public <T> T getRemoteProxy(Class<T> serviceType, final String serviceId) {
+        RequestHandler requestHandler = remoteConfig.createOutgoingRequestHandler();
+        ClassLoader classLoader = getClass().getClassLoader();
+        Class<?>[] interfaces = new Class<?>[]{ serviceType };
+        RemoteServiceHandler remoteRequestHandler = new RemoteServiceHandler(serviceId, requestHandler);
+        return (T) Proxy.newProxyInstance(classLoader, interfaces, remoteRequestHandler);
+    }
+
+    public String createConnector(String domainType, Domain connectorInstance)
         throws ConnectorValidationFailedException, JMSException {
 
         LocalRequestHandler remoteRequestHandler = new LocalRequestHandler(connectorInstance);
         ConnectorDescription connectorDescription = new ConnectorDescription(
             domainType, "external-connector-proxy",
             new HashMap<String, String>(), new HashMap<String, Object>());
-        ConnectorConfiguration config = remoteConfig.createConnectorHandler(remoteRequestHandler,
+        ConnectorConfiguration config = remoteConfig.registerRequestHandler(remoteRequestHandler,
             connectorDescription);
-        ConnectorManager cm = getRemoteProxy(ConnectorManager.class, null);
+        ConnectorManager cm = getConnectorManager();
         cm.createWithId(config.getConnectorId(), config.getContent());
         return config.getConnectorId();
     }
 
-    @SuppressWarnings("unchecked")
-    public <T> T getRemoteProxy(Class<T> serviceType, final String serviceId) {
-        RequestHandler requestHandler = remoteConfig.createOutgoingRequestHandler();
-        return (T) Proxy.newProxyInstance(getClass().getClassLoader(), new Class<?>[]{ serviceType },
-            new RemoteServiceHandler(serviceId, requestHandler));
+    public void deleteConnector(String id) {
+        ConnectorManager connectorManager = getConnectorManager();
+        connectorManager.delete(id);
     }
 
-    public void unregisterConnector(Object connectorInstance) {
-
+    private ConnectorManager getConnectorManager() {
+        return getRemoteProxy(ConnectorManager.class, null);
     }
+
 }

@@ -5,8 +5,7 @@ import org.openengsb.core.api.model.ConnectorDescription;
 
 public interface ProtocolHandler {
 
-    ConnectorConfiguration createConnectorHandler(LocalRequestHandler remoteRequestHandler,
-            ConnectorDescription connectorDescription);
+    ConnectorConfiguration registerRequestHandler(LocalRequestHandler requestHandler, ConnectorDescription description);
 
     RequestHandler createOutgoingRequestHandler();
 

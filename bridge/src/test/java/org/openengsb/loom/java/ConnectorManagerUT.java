@@ -57,8 +57,18 @@ public class ConnectorManagerUT {
     @Test
     public void createConnectorProxy() throws Exception {
         ExampleDomain handler = new ExampleConnector();
-        String uuid = domainFactory.registerConnector("example", handler);
-        ExampleDomain self = domainFactory.getRemoteProxy(ExampleDomain.class, uuid);
+        String uuid = domainFactory.createConnector("example", handler);
+        final ExampleDomain self = domainFactory.getRemoteProxy(ExampleDomain.class, uuid);
         assertThat(self.doSomethingWithMessage("asdf"), is("42"));
+        domainFactory.deleteConnector(uuid);
+        Thread thread = new Thread() {
+            public void run() {
+                self.doSomethingWithMessage("stuff");
+            };
+        };
+        thread.start();
+        thread.join(2000);
+        assertThat("It seems the example-connector has not been deleted", thread.isAlive(), is(true));
+        thread.interrupt();
     }
 }

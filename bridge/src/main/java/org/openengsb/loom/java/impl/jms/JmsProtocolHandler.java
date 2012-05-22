@@ -168,7 +168,7 @@ public class JmsProtocolHandler implements ProtocolHandler {
     }
 
     @Override
-    public ConnectorConfiguration createConnectorHandler(LocalRequestHandler remoteRequestHandler,
+    public ConnectorConfiguration registerRequestHandler(LocalRequestHandler remoteRequestHandler,
             ConnectorDescription connectorDescription) {
         String queuename = UUID.randomUUID().toString();
         try {
