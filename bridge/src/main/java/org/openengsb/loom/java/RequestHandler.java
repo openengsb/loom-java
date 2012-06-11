@@ -1,10 +1,10 @@
 package org.openengsb.loom.java;
 
-import org.openengsb.core.api.security.model.SecureRequest;
-import org.openengsb.core.api.security.model.SecureResponse;
+import org.openengsb.core.api.remote.MethodCallMessage;
+import org.openengsb.core.api.remote.MethodResultMessage;
 
 public interface RequestHandler {
 
-    SecureResponse process(SecureRequest request) throws Exception;
+    MethodResultMessage process(MethodCallMessage request) throws Exception;
 
 }

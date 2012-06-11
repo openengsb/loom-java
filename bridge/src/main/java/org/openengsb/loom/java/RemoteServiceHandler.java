@@ -8,9 +8,8 @@ import java.util.Map;
 import org.openengsb.connector.usernamepassword.Password;
 import org.openengsb.core.api.model.BeanDescription;
 import org.openengsb.core.api.remote.MethodCall;
-import org.openengsb.core.api.remote.MethodCallRequest;
-import org.openengsb.core.api.security.model.SecureRequest;
-import org.openengsb.core.api.security.model.SecureResponse;
+import org.openengsb.core.api.remote.MethodCallMessage;
+import org.openengsb.core.api.remote.MethodResultMessage;
 import org.osgi.framework.Constants;
 
 public class RemoteServiceHandler implements InvocationHandler {
@@ -29,17 +28,16 @@ public class RemoteServiceHandler implements InvocationHandler {
             args = new Object[0];
         }
         MethodCall methodCall = createMethodCall(method, args, serviceId);
-        SecureRequest wrapped = wrapMethodCall(methodCall);
-        SecureResponse response = requestHandler.process(wrapped);
-        return response.getMessage().getResult().getArg();
+        MethodCallMessage wrapped = wrapMethodCall(methodCall);
+        MethodResultMessage response = requestHandler.process(wrapped);
+        return response.getResult().getArg();
     }
 
-    private SecureRequest wrapMethodCall(MethodCall methodCall) {
-        MethodCallRequest methodCallRequest = new MethodCallRequest(methodCall);
-        methodCallRequest.setAnswer(true);
-        SecureRequest result =
-            SecureRequest.create(methodCallRequest, "admin", BeanDescription.fromObject(new Password("password")));
-        return result;
+    private MethodCallMessage wrapMethodCall(MethodCall methodCall) {
+        MethodCallMessage methodCallRequest = new MethodCallMessage(methodCall);
+        methodCallRequest.setPrincipal("admin");
+        methodCallRequest.setCredentials(BeanDescription.fromObject(new Password("password")));
+        return methodCallRequest;
     }
 
     private MethodCall createMethodCall(Method method, Object[] args, String serviceId) {

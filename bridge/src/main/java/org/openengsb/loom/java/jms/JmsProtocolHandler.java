@@ -21,10 +21,9 @@ import org.apache.activemq.ActiveMQConnectionFactory;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.openengsb.core.api.model.ConnectorConfiguration;
 import org.openengsb.core.api.model.ConnectorDescription;
+import org.openengsb.core.api.remote.MethodCallMessage;
 import org.openengsb.core.api.remote.MethodResult;
 import org.openengsb.core.api.remote.MethodResultMessage;
-import org.openengsb.core.api.security.model.SecureRequest;
-import org.openengsb.core.api.security.model.SecureResponse;
 import org.openengsb.loom.java.LocalRequestHandler;
 import org.openengsb.loom.java.ProtocolHandler;
 import org.openengsb.loom.java.RequestHandler;
@@ -55,12 +54,12 @@ public class JmsProtocolHandler implements ProtocolHandler {
 
     private class JmsRemoteRequestHandler implements RequestHandler {
         @Override
-        public SecureResponse process(SecureRequest request) throws Exception {
+        public MethodResultMessage process(MethodCallMessage request) throws Exception {
             Message message = marshal(request);
             String correlationId = UUID.randomUUID().toString();
             message.setJMSCorrelationID(correlationId);
             Message result = sendAndReceive(message, correlationId);
-            return unmarshal(result, SecureResponse.class);
+            return unmarshal(result, MethodResultMessage.class);
         }
 
         private Message sendAndReceive(Message message, String correlationId) throws JMSException, InterruptedException {
@@ -79,9 +78,9 @@ public class JmsProtocolHandler implements ProtocolHandler {
 
         @Override
         public void onMessage(Message message) {
-            SecureRequest request;
+            MethodCallMessage request;
             try {
-                request = unmarshal(message, SecureRequest.class);
+                request = unmarshal(message, MethodCallMessage.class);
             } catch (JMSException e) {
                 LOGGER.error("Exception when parsing message", e);
                 return;
@@ -90,9 +89,9 @@ public class JmsProtocolHandler implements ProtocolHandler {
                 return;
             }
             LOGGER.info(request.toString());
-            MethodResult result = remoteRequestHandler.process(request.getMessage().getMethodCall());
-            String callId = request.getMessage().getCallId();
-            SecureResponse response = SecureResponse.create(new MethodResultMessage(result, callId));
+            MethodResult result = remoteRequestHandler.process(request.getMethodCall());
+            String callId = request.getCallId();
+            MethodResultMessage response = new MethodResultMessage(result, callId);
             try {
                 MessageProducer producer = createProducerForQueue(callId);
                 producer.send(marshal(response));
