@@ -2,10 +2,13 @@ package org.openengsb.loom.java;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
 
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.FutureTask;
 
 import org.hamcrest.CoreMatchers;
 import org.junit.After;
@@ -13,14 +16,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.openengsb.core.api.ConnectorManager;
 import org.openengsb.core.api.model.ConnectorDescription;
-import org.openengsb.core.api.model.OpenEngSBModelEntry;
-import org.openengsb.core.api.model.OpenEngSBModelWrapper;
 import org.openengsb.core.api.security.service.UserDataManager;
 import org.openengsb.core.common.util.ModelUtils;
 import org.openengsb.domain.example.ExampleDomain;
 import org.openengsb.domain.example.model.ExampleRequestModel;
 import org.openengsb.domain.example.model.ExampleResponseModel;
-import org.openengsb.loom.java.ProxyConnectorFactory;
 import org.openengsb.loom.java.jms.JmsProtocolHandler;
 
 import com.google.common.collect.ImmutableMap;
@@ -63,40 +63,58 @@ public class ConnectorManagerUT {
     @Test
     public void createConnectorProxyWithModel() throws Exception {
         ExampleDomain handler = new ExampleConnector();
-        String uuid = domainFactory.createConnector("example", handler);
+        String uuid = domainFactory.createConnector("example");
+        domainFactory.registerConnector(uuid, handler);
         final ExampleDomain self = domainFactory.getRemoteProxy(ExampleDomain.class, uuid);
         ExampleRequestModel modelObject = ModelUtils.createEmptyModelObject(ExampleRequestModel.class);
         modelObject.setId(42);
         modelObject.setName("foo");
         ExampleResponseModel result = self.doSomethingWithModel(modelObject);
-        domainFactory.deleteConnector(uuid);
+        domainFactory.unregisterConnector(uuid);
         assertThat(result.getResult(), is("foo"));
-        Thread thread = new Thread() {
-            public void run() {
-                self.doSomethingWithMessage("stuff");
-            };
+        Callable<String> task = new Callable<String>() {
+            @Override
+            public String call() throws Exception {
+                return self.doSomethingWithMessage("stuff");
+            }
         };
+        FutureTask<String> futureTask = new FutureTask<String>(task);
+        Thread thread = new Thread(futureTask);
         thread.start();
-        thread.join(2000);
-        assertThat("It seems the example-connector has not been deleted", thread.isAlive(), is(true));
-        thread.interrupt();
+        thread.join();
+        try {
+            futureTask.get();
+            fail("expected Execution Exception, because the connector should have been unregistered");
+        } catch (ExecutionException e) {
+            // expected
+        }
+        domainFactory.deleteConnector(uuid);
     }
 
     @Test
     public void createConnectorProxy() throws Exception {
         ExampleDomain handler = new ExampleConnector();
-        String uuid = domainFactory.createConnector("example", handler);
+        String uuid = domainFactory.createConnector("example");
+        domainFactory.registerConnector(uuid, handler);
         final ExampleDomain self = domainFactory.getRemoteProxy(ExampleDomain.class, uuid);
         assertThat(self.doSomethingWithMessage("asdf"), is("42"));
-        domainFactory.deleteConnector(uuid);
-        Thread thread = new Thread() {
-            public void run() {
-                self.doSomethingWithMessage("stuff");
-            };
+        domainFactory.unregisterConnector(uuid);
+        Callable<String> task = new Callable<String>() {
+            @Override
+            public String call() throws Exception {
+                return self.doSomethingWithMessage("stuff");
+            }
         };
+        FutureTask<String> futureTask = new FutureTask<String>(task);
+        Thread thread = new Thread(futureTask);
         thread.start();
-        thread.join(2000);
-        assertThat("It seems the example-connector has not been deleted", thread.isAlive(), is(true));
-        thread.interrupt();
+        thread.join();
+        try {
+            futureTask.get();
+            fail("expected Execution Exception, because the connector should have been unregistered");
+        } catch (ExecutionException e) {
+            // expected
+        }
+        domainFactory.deleteConnector(uuid);
     }
 }

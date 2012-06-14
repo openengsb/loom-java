@@ -3,7 +3,6 @@ package org.openengsb.loom.java.jms;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.Map;
 import java.util.UUID;
 
 import javax.jms.Connection;
@@ -19,8 +18,6 @@ import javax.jms.TextMessage;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.openengsb.core.api.model.ConnectorConfiguration;
-import org.openengsb.core.api.model.ConnectorDescription;
 import org.openengsb.core.api.remote.MethodCallMessage;
 import org.openengsb.core.api.remote.MethodResult;
 import org.openengsb.core.api.remote.MethodResultMessage;
@@ -30,8 +27,6 @@ import org.openengsb.loom.java.RequestHandler;
 import org.openengsb.loom.java.util.QueueMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.collect.ImmutableMap;
 
 public class JmsProtocolHandler implements ProtocolHandler {
 
@@ -155,6 +150,7 @@ public class JmsProtocolHandler implements ProtocolHandler {
         receiveQueueProducer = session.createProducer(destination);
     }
 
+    @Override
     public void destroy() {
         try {
             session.close();
@@ -171,9 +167,8 @@ public class JmsProtocolHandler implements ProtocolHandler {
     }
 
     @Override
-    public ConnectorConfiguration registerRequestHandler(LocalRequestHandler remoteRequestHandler,
-            ConnectorDescription connectorDescription) {
-        String queuename = UUID.randomUUID().toString();
+    public String registerRequestHandler(LocalRequestHandler remoteRequestHandler, String uuid) {
+        String queuename = uuid;
         try {
             Queue connectorIncQueue = session.createQueue(queuename);
             MessageConsumer createConsumer = session.createConsumer(connectorIncQueue);
@@ -182,10 +177,12 @@ public class JmsProtocolHandler implements ProtocolHandler {
             throw new RuntimeException(e);
         }
         String destination = "tcp://127.0.0.1:6549?" + queuename;
-        Map<String, String> attr =
-            ImmutableMap.of("portId", "jms-json", "destination", destination, "serviceId", queuename);
-        connectorDescription.setAttributes(attr);
-        return new ConnectorConfiguration(queuename, connectorDescription);
+        return destination;
+    }
+
+    @Override
+    public String getPortId() {
+        return "jms-json";
     }
 
     public MessageProducer createProducerForQueue(String callId) throws JMSException {

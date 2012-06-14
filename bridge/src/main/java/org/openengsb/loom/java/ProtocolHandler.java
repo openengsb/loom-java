@@ -1,14 +1,14 @@
 package org.openengsb.loom.java;
 
-import org.openengsb.core.api.model.ConnectorConfiguration;
-import org.openengsb.core.api.model.ConnectorDescription;
 
 public interface ProtocolHandler {
 
-    ConnectorConfiguration registerRequestHandler(LocalRequestHandler requestHandler, ConnectorDescription description);
+    String registerRequestHandler(LocalRequestHandler requestHandler, String uuid);
 
     RequestHandler createOutgoingRequestHandler();
 
     void destroy();
+
+    String getPortId();
 
 }
