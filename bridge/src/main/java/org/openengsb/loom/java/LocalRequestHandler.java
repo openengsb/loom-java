@@ -25,6 +25,8 @@ import java.lang.reflect.Method;
 import org.openengsb.core.api.remote.MethodCall;
 import org.openengsb.core.api.remote.MethodResult;
 import org.openengsb.core.api.remote.MethodResult.ReturnType;
+import org.openengsb.core.common.util.JsonUtils;
+import org.openengsb.loom.java.util.ArgumentUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,6 +48,8 @@ public class LocalRequestHandler {
     }
 
     private MethodResult doProcess(MethodCall request) throws Exception {
+        JsonUtils.convertAllArgs(request);
+        ArgumentUtils.unwrapModels(request.getArgs());
         Class<?>[] argTypes = getArgTypes(request);
         LOGGER.debug("searching for method {} with args {}", request.getMethodName(), argTypes);
         Method method = connector.getClass().getMethod(request.getMethodName(), argTypes);
@@ -53,6 +57,7 @@ public class LocalRequestHandler {
         Object result;
         try {
             result = method.invoke(connector, request.getArgs());
+            result = ArgumentUtils.wrapModel(result);
         } catch (InvocationTargetException e) {
             throw (Exception) e.getTargetException();
         }
@@ -65,12 +70,16 @@ public class LocalRequestHandler {
 
     private Class<?>[] getArgTypes(MethodCall call) {
         Object[] args = call.getArgs();
-        if(args==null){
+        if (args == null) {
             return new Class<?>[0];
         }
         Class<?>[] types = new Class<?>[args.length];
         for (int i = 0; i < args.length; i++) {
             types[i] = args[i].getClass();
+            if(types[i].getName().contains("$Proxy")){
+                Class<?>[] interfaces = types[i].getInterfaces();
+                types[i] = interfaces[interfaces.length - 1];
+            }
         }
         return types;
     }

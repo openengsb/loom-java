@@ -109,6 +109,11 @@
       </dependency>
       <dependency>
         <groupId>org.openengsb.framework</groupId>
+        <artifactId>org.openengsb.framework.common</artifactId>
+        <version>${openengsb.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.openengsb.framework</groupId>
         <artifactId>org.openengsb.framework.common.json</artifactId>
         <version>${openengsb.version}</version>
       </dependency>

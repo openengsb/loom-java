@@ -7,9 +7,17 @@ import java.util.Map;
 
 import org.openengsb.connector.usernamepassword.Password;
 import org.openengsb.core.api.model.BeanDescription;
+import org.openengsb.core.api.model.OpenEngSBModel;
+import org.openengsb.core.api.model.OpenEngSBModelEntry;
+import org.openengsb.core.api.model.OpenEngSBModelWrapper;
 import org.openengsb.core.api.remote.MethodCall;
 import org.openengsb.core.api.remote.MethodCallMessage;
+import org.openengsb.core.api.remote.MethodResult.ReturnType;
 import org.openengsb.core.api.remote.MethodResultMessage;
+import org.openengsb.core.common.util.JsonUtils;
+import org.openengsb.core.common.util.ModelUtils;
+import org.openengsb.domain.example.model.ExampleResponseModel;
+import org.openengsb.loom.java.util.ArgumentUtils;
 import org.osgi.framework.Constants;
 
 public class RemoteServiceHandler implements InvocationHandler {
@@ -27,10 +35,24 @@ public class RemoteServiceHandler implements InvocationHandler {
         if (args == null) {
             args = new Object[0];
         }
+        ArgumentUtils.wrapModels(args);
         MethodCall methodCall = createMethodCall(method, args, serviceId);
         MethodCallMessage wrapped = wrapMethodCall(methodCall);
         MethodResultMessage response = requestHandler.process(wrapped);
-        return response.getResult().getArg();
+        if (response.getResult().getType().equals(ReturnType.Object)) {
+            JsonUtils.convertResult(response);
+        }
+        Object resultObject = response.getResult().getArg();
+        resultObject = ArgumentUtils.unwrapModel(resultObject);
+        if (resultObject instanceof OpenEngSBModelWrapper) {
+            OpenEngSBModelWrapper wrapper = ((OpenEngSBModelWrapper) resultObject);
+            Class<? extends OpenEngSBModel> modelClass =
+                (Class<? extends OpenEngSBModel>) Thread.currentThread().getContextClassLoader()
+                    .loadClass(wrapper.getModelClass());
+            return ModelUtils.createEmptyModelObject(modelClass,
+                wrapper.getEntries().toArray(new OpenEngSBModelEntry[0]));
+        }
+        return resultObject;
     }
 
     private MethodCallMessage wrapMethodCall(MethodCall methodCall) {
