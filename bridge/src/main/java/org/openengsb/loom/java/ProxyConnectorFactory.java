@@ -23,8 +23,8 @@ import java.util.HashMap;
 import org.openengsb.core.api.ConnectorManager;
 import org.openengsb.core.api.ConnectorValidationFailedException;
 import org.openengsb.core.api.Domain;
-import org.openengsb.core.api.model.ConnectorConfiguration;
 import org.openengsb.core.api.model.ConnectorDescription;
+import org.openengsb.core.api.remote.ProxyConnectorRegistry;
 
 public class ProxyConnectorFactory {
 
@@ -43,18 +43,20 @@ public class ProxyConnectorFactory {
         return (T) Proxy.newProxyInstance(classLoader, interfaces, remoteRequestHandler);
     }
 
-    public String createConnector(String domainType, Domain connectorInstance)
+    public String createConnector(String domainType)
         throws ConnectorValidationFailedException {
+        ConnectorDescription connectorDescription =
+            new ConnectorDescription(domainType, "external-connector-proxy", new HashMap<String, String>(),
+                new HashMap<String, Object>());
+        String uuid = getConnectorManager().create(connectorDescription);
+        return uuid;
+    }
 
+    public void registerConnector(String uuid, Domain connectorInstance) {
         LocalRequestHandler remoteRequestHandler = new LocalRequestHandler(connectorInstance);
-        ConnectorDescription connectorDescription = new ConnectorDescription(
-            domainType, "external-connector-proxy",
-            new HashMap<String, String>(), new HashMap<String, Object>());
-        ConnectorConfiguration config = remoteConfig.registerRequestHandler(remoteRequestHandler,
-            connectorDescription);
-        ConnectorManager cm = getConnectorManager();
-        cm.createWithId(config.getConnectorId(), config.getContent());
-        return config.getConnectorId();
+        String destination = remoteConfig.registerRequestHandler(remoteRequestHandler, uuid);
+        String portId = remoteConfig.getPortId();
+        getConnectorRegistry().registerConnector(uuid, portId, destination);
     }
 
     public void deleteConnector(String id) {
@@ -62,8 +64,16 @@ public class ProxyConnectorFactory {
         connectorManager.delete(id);
     }
 
+    public void unregisterConnector(String uuid) {
+        getConnectorRegistry().unregisterConnector(uuid);
+    }
+
     private ConnectorManager getConnectorManager() {
         return getRemoteProxy(ConnectorManager.class, null);
+    }
+
+    private ProxyConnectorRegistry getConnectorRegistry() {
+        return getRemoteProxy(ProxyConnectorRegistry.class, null);
     }
 
 }

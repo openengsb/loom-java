@@ -10,7 +10,8 @@ public class TestApp {
         JmsProtocolHandler jmsConfig = new JmsProtocolHandler(baseURL);
         ProxyConnectorFactory domainFactory = new ProxyConnectorFactory(jmsConfig);
         ExampleDomain handler = new ExampleConnector();
-        String uuid = domainFactory.createConnector("example", handler);
+        String uuid = domainFactory.createConnector("example");
+        domainFactory.registerConnector(uuid, handler);
         System.out.println(uuid);
         System.in.read();
         domainFactory.deleteConnector(uuid);
