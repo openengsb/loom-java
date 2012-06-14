@@ -46,7 +46,7 @@ public class RemoteServiceHandler implements InvocationHandler {
         if (serviceId != null) {
             metadata.put("serviceFilter",
                 String.format("(&(%s=%s)(%s=%s))", Constants.OBJECTCLASS, method.getDeclaringClass().getName(),
-                    "id", serviceId));
+                    "service.pid", serviceId));
         } else {
             metadata.put("serviceFilter",
                 String.format("(%s=%s)", Constants.OBJECTCLASS, method.getDeclaringClass().getName()));
