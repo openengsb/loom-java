@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.Enumeration;
-import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -37,11 +36,6 @@ public class ConnectorManagerTest extends ConnectorManagerUT {
         LOGGER.info("injecting features");
         FileUtils.copyURLToFile(ClassLoader.getSystemResource("features.xml"), new File(openengsbRoot,
             "deploy/features.xml"));
-        File file = new File(openengsbRoot, "etc/system.properties");
-        List<String> sysPropLines = FileUtils.readLines(file);
-        sysPropLines.add("org.openengsb.security.noverify=true");
-        sysPropLines.add("org.openengsb.jms.noencrypt=true");
-        FileUtils.writeLines(file, sysPropLines);
         File executable =
             new File(openengsbRoot, "bin/openengsb");
         executable.setExecutable(true);
