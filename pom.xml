@@ -48,6 +48,9 @@
     <openengsb.version>3.0.0-SNAPSHOT</openengsb.version>
     <hamcrest.version>1.2.1</hamcrest.version>
     <guava.version>11.0.2</guava.version>
+    <aether.version>1.13.1</aether.version>
+    <maven.version>3.0.4</maven.version>
+    <plexus.version>1.5.5</plexus.version>
   </properties>
 
   <licenses>
@@ -195,6 +198,37 @@
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
         <version>${guava.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.sonatype.aether</groupId>
+        <artifactId>aether-api</artifactId>
+        <version>${aether.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.sonatype.aether</groupId>
+        <artifactId>aether-util</artifactId>
+        <version>${aether.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.maven</groupId>
+        <artifactId>maven-aether-provider</artifactId>
+        <version>${maven.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.sonatype.aether</groupId>
+        <artifactId>aether-connector-file</artifactId>
+        <version>${aether.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.sonatype.aether</groupId>
+        <artifactId>aether-connector-asynchttpclient</artifactId>
+        <version>${aether.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.codehaus.plexus</groupId>
+        <artifactId>plexus-container-default</artifactId>
+        <version>${plexus.version}</version>
+        <scope>test</scope>
       </dependency>
     </dependencies>
   </dependencyManagement>

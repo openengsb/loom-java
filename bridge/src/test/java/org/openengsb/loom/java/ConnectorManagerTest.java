@@ -18,9 +18,7 @@ import org.slf4j.LoggerFactory;
 public class ConnectorManagerTest extends ConnectorManagerUT {
     private static final Logger LOGGER = LoggerFactory.getLogger(ConnectorManagerTest.class);
 
-    private static final String zipPath = ""
-            + ".m2/repository/org/openengsb/framework/openengsb-framework/"
-            + "3.0.0-SNAPSHOT/openengsb-framework-3.0.0-SNAPSHOT.zip";
+    private static String OPENENGSB_VERSION = "3.0.0-SNAPSHOT";
 
     private static TemporaryFolder tmpFolder = new TemporaryFolder();
 
@@ -28,11 +26,11 @@ public class ConnectorManagerTest extends ConnectorManagerUT {
 
     @BeforeClass
     public static void setUpOpenEngSB() throws Exception {
-        File fullZIPPath = new File(FileUtils.getUserDirectory(), zipPath);
+        File fullZIPPath = AetherUtil.downloadArtifact(OPENENGSB_VERSION);;
         tmpFolder.create();
         LOGGER.info("unpacking openengsb");
         unzip(fullZIPPath, tmpFolder.getRoot());
-        File openengsbRoot = new File(tmpFolder.getRoot(), "openengsb-framework-3.0.0-SNAPSHOT/");
+        File openengsbRoot = new File(tmpFolder.getRoot(), "openengsb-framework-" + OPENENGSB_VERSION + "/");
         LOGGER.info("injecting features");
         FileUtils.copyURLToFile(ClassLoader.getSystemResource("features.xml"), new File(openengsbRoot,
             "deploy/features.xml"));
