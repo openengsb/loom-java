@@ -39,12 +39,6 @@ public class ExampleConnector implements ExampleDomain, Connector {
     }
 
     @Override
-    public String doSomethingWithEnum(ExampleEnum arg0) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
     public String getConnectorId() {
         // TODO Auto-generated method stub
         return null;
