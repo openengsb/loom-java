@@ -79,12 +79,12 @@ public class ConnectorManagerTest extends ConnectorManagerUT {
             ZipEntry entry = (ZipEntry) entries.nextElement();
             if (entry.isDirectory()) {
                 // Assume directories are stored parents first then children.
-                LOGGER.info("Extracting directory: " + entry.getName());
+                LOGGER.debug("Extracting directory: " + entry.getName());
                 // This is not robust, just for demonstration purposes.
                 (new File(entry.getName())).mkdir();
                 continue;
             }
-            LOGGER.info("Extracting file: " + entry.getName());
+            LOGGER.debug("Extracting file: " + entry.getName());
             FileUtils.copyInputStreamToFile(zipFile.getInputStream(entry), new File(target, entry.getName()));
         }
         zipFile.close();
