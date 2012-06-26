@@ -4,6 +4,7 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
+import java.lang.reflect.UndeclaredThrowableException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.concurrent.Callable;
@@ -99,22 +100,27 @@ public class ConnectorManagerUT {
         final ExampleDomain self = domainFactory.getRemoteProxy(ExampleDomain.class, uuid);
         assertThat(self.doSomethingWithMessage("asdf"), is("42"));
         domainFactory.unregisterConnector(uuid);
-        Callable<String> task = new Callable<String>() {
-            @Override
-            public String call() throws Exception {
-                return self.doSomethingWithMessage("stuff");
-            }
-        };
-        FutureTask<String> futureTask = new FutureTask<String>(task);
-        Thread thread = new Thread(futureTask);
-        thread.start();
-        thread.join();
-        try {
-            futureTask.get();
+        try{
+            self.doSomethingWithMessage("stuff");
             fail("expected Execution Exception, because the connector should have been unregistered");
-        } catch (ExecutionException e) {
+        } catch (RemoteException e) {
             // expected
         }
         domainFactory.deleteConnector(uuid);
     }
+    
+    @Test
+    public void callNotRegisteredConnectorProxy_shouldFail() throws Exception {
+        String uuid = domainFactory.createConnector("example");
+        final ExampleDomain self = domainFactory.getRemoteProxy(ExampleDomain.class, uuid);
+        try{
+            self.doSomethingWithMessage("stuff");
+            fail("expected Execution Exception, because the connector should have been unregistered");
+        } catch (RemoteException e) {
+            // expected
+        }
+        domainFactory.deleteConnector(uuid);
+    }
+    
+    
 }

@@ -38,7 +38,7 @@ public class RemoteServiceHandler implements InvocationHandler {
             JsonUtils.convertResult(response);
         }
         if(response.getResult().getType().equals(ReturnType.Exception)){
-            throw new Exception();
+            throw new RemoteException(response.getResult().getClassName());
         }
         Object resultObject = response.getResult().getArg();
         resultObject = ArgumentUtils.unwrapModel(resultObject);
