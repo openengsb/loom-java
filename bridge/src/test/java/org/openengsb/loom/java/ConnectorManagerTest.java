@@ -1,7 +1,9 @@
 package org.openengsb.loom.java;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.ConnectException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.Enumeration;
@@ -45,16 +47,23 @@ public class ConnectorManagerTest extends ConnectorManagerUT {
             try {
                 URLConnection openConnection = url.openConnection();
                 openConnection.connect();
-                System.out.println(openConnection.getContent());
-                System.out.println(openConnection.getContentType());
+                openConnection.getContent();
+            } catch (ConnectException e) {
+                Thread.sleep(300);
+                LOGGER.info("openengsb is not ready yet. {} - {}", e.getClass().getName(), e.getMessage());
+                continue;
+            } catch (IOException e){
+                Thread.sleep(300);
+                LOGGER.info("openengsb is not ready yet. {} - {}", e.getClass().getName(), e.getMessage());
+                continue;
             } catch (Exception e) {
                 Thread.sleep(300);
-                System.out.println("openengsb is not ready yet. " + e.getClass().getName() + " - " + e.getMessage());
+                LOGGER.error("openengsb is not ready yet", e);
                 continue;
             }
             break;
         }
-        System.out.println("starting");
+        LOGGER.info("OpenEngSB seems to be completely booted up, starting tests...");
     }
 
     @AfterClass

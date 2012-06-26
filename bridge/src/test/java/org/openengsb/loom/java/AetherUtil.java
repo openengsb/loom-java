@@ -5,6 +5,8 @@ import java.text.DecimalFormat;
 
 import org.apache.maven.repository.internal.MavenRepositorySystemSession;
 import org.codehaus.plexus.DefaultPlexusContainer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.sonatype.aether.RepositorySystem;
 import org.sonatype.aether.RepositorySystemSession;
 import org.sonatype.aether.collection.CollectRequest;
@@ -21,6 +23,8 @@ import org.sonatype.aether.util.artifact.DefaultArtifact;
 
 public class AetherUtil {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(AetherUtil.class);
+
     private static RepositorySystem newRepositorySystem() throws Exception {
         return new DefaultPlexusContainer().lookup(RepositorySystem.class);
     }
@@ -32,10 +36,9 @@ public class AetherUtil {
         session.setTransferListener(new AbstractTransferListener() {
             @Override
             public void transferProgressed(TransferEvent event) throws TransferCancelledException {
-                System.out.println("Downloading "
-                        + event.getResource().getFile().getName() + ": "
-                        + formatter.format(event.getTransferredBytes()) + "/"
-                        + formatter.format(event.getResource().getContentLength()));
+                LOGGER.info(String.format("Downloading %s: %s/%s", event.getResource().getFile().getName(),
+                    formatter.format(event.getTransferredBytes()),
+                    formatter.format(event.getResource().getContentLength())));
             }
         });
         String homedir = System.getProperty("user.home");
@@ -61,7 +64,7 @@ public class AetherUtil {
         collectRequest.addRepository(sonatypeSnapshots);
         collectRequest.addRepository(central);
 
-        System.out.println("collecting");
+        LOGGER.info("collecting dependencies for OpenEngSB {}", openengsbVersion);
         CollectResult collectDependencies = repoSystem.collectDependencies(session, collectRequest);
         DependencyNode node = collectDependencies.getRoot();
         DependencyRequest dependencyRequest = new DependencyRequest(node, null);
