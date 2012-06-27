@@ -30,7 +30,7 @@ public class ConnectorManagerUT {
 
     private ProxyConnectorFactory domainFactory;
 
-    private static final String baseURL = "failover:(tcp://localhost:6549)?timeout=6000";
+    private static final String baseURL = "failover:(tcp://localhost:6549)?timeout=60000";
 
     private JmsProtocolHandler jmsConfig;
 
