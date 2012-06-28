@@ -7,11 +7,13 @@ import java.util.Map;
 
 import org.openengsb.connector.usernamepassword.Password;
 import org.openengsb.core.api.model.BeanDescription;
+import org.openengsb.core.api.model.OpenEngSBModel;
 import org.openengsb.core.api.remote.MethodCall;
 import org.openengsb.core.api.remote.MethodCallMessage;
 import org.openengsb.core.api.remote.MethodResult.ReturnType;
 import org.openengsb.core.api.remote.MethodResultMessage;
 import org.openengsb.core.common.util.JsonUtils;
+import org.openengsb.core.common.util.ModelUtils;
 import org.openengsb.loom.java.util.ArgumentUtils;
 import org.osgi.framework.Constants;
 
@@ -53,6 +55,11 @@ public class RemoteServiceHandler implements InvocationHandler {
     }
 
     private MethodCall createMethodCall(Method method, Object[] args, String serviceId) {
+        for(int i = 0; i < args.length; i++){
+            if(args[i] instanceof OpenEngSBModel){
+                args[i] = ModelUtils.generateWrapperOutOfModel((OpenEngSBModel) args[i]);
+            }
+        }
         MethodCall methodCall = new MethodCall(method.getName(), args);
         Map<String, String> metadata = new HashMap<String, String>();
         if (serviceId != null) {
@@ -63,7 +70,7 @@ public class RemoteServiceHandler implements InvocationHandler {
             metadata.put("serviceFilter",
                 String.format("(%s=%s)", Constants.OBJECTCLASS, method.getDeclaringClass().getName()));
         }
-
+        metadata.put("contextId", "root");
         methodCall.setMetaData(metadata);
         return methodCall;
     }
