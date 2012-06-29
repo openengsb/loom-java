@@ -1,5 +1,6 @@
 package org.openengsb.loom.java;
 
+import org.openengsb.connector.usernamepassword.Password;
 import org.openengsb.domain.example.ExampleDomain;
 import org.openengsb.loom.java.jms.JmsProtocolHandler;
 
@@ -8,7 +9,7 @@ public class TestApp {
 
     public static void main(String[] args) throws Exception {
         JmsProtocolHandler jmsConfig = new JmsProtocolHandler(baseURL);
-        ProxyConnectorFactory domainFactory = new ProxyConnectorFactory(jmsConfig);
+        ProxyConnectorFactory domainFactory = new ProxyConnectorFactory(jmsConfig, "admin", new Password("password"));
         ExampleDomain handler = new ExampleConnector();
         String uuid = domainFactory.createConnector("example");
         domainFactory.registerConnector(uuid, handler);

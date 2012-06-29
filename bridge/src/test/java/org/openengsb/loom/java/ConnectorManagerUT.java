@@ -4,7 +4,6 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
-import java.lang.reflect.UndeclaredThrowableException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.concurrent.Callable;
@@ -15,6 +14,7 @@ import org.hamcrest.CoreMatchers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.openengsb.connector.usernamepassword.Password;
 import org.openengsb.core.api.ConnectorManager;
 import org.openengsb.core.api.model.ConnectorDescription;
 import org.openengsb.core.api.security.service.UserDataManager;
@@ -37,7 +37,7 @@ public class ConnectorManagerUT {
     @Before
     public void setUp() throws Exception {
         jmsConfig = new JmsProtocolHandler(baseURL);
-        domainFactory = new ProxyConnectorFactory(jmsConfig);
+        domainFactory = new ProxyConnectorFactory(jmsConfig, "admin", new Password("password"));
     }
 
     @After
@@ -100,7 +100,7 @@ public class ConnectorManagerUT {
         final ExampleDomain self = domainFactory.getRemoteProxy(ExampleDomain.class, uuid);
         assertThat(self.doSomethingWithMessage("asdf"), is("42"));
         domainFactory.unregisterConnector(uuid);
-        try{
+        try {
             self.doSomethingWithMessage("stuff");
             fail("expected Execution Exception, because the connector should have been unregistered");
         } catch (RemoteException e) {
@@ -108,12 +108,12 @@ public class ConnectorManagerUT {
         }
         domainFactory.deleteConnector(uuid);
     }
-    
+
     @Test
     public void callNotRegisteredConnectorProxy_shouldFail() throws Exception {
         String uuid = domainFactory.createConnector("example");
         final ExampleDomain self = domainFactory.getRemoteProxy(ExampleDomain.class, uuid);
-        try{
+        try {
             self.doSomethingWithMessage("stuff");
             fail("expected Execution Exception, because the connector should have been unregistered");
         } catch (RemoteException e) {
@@ -121,6 +121,5 @@ public class ConnectorManagerUT {
         }
         domainFactory.deleteConnector(uuid);
     }
-    
-    
+
 }

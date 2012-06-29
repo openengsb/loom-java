@@ -25,13 +25,18 @@ import org.openengsb.core.api.ConnectorValidationFailedException;
 import org.openengsb.core.api.Domain;
 import org.openengsb.core.api.model.ConnectorDescription;
 import org.openengsb.core.api.remote.ProxyConnectorRegistry;
+import org.openengsb.core.api.security.Credentials;
 
 public class ProxyConnectorFactory {
 
     private ProtocolHandler remoteConfig;
+    private String principal;
+    private Credentials credentials;
 
-    public ProxyConnectorFactory(ProtocolHandler remoteConfig) {
+    public ProxyConnectorFactory(ProtocolHandler remoteConfig, String principal, Credentials credentials) {
         this.remoteConfig = remoteConfig;
+        this.principal = principal;
+        this.credentials = credentials;
     }
 
     @SuppressWarnings("unchecked")
@@ -39,7 +44,8 @@ public class ProxyConnectorFactory {
         RequestHandler requestHandler = remoteConfig.createOutgoingRequestHandler();
         ClassLoader classLoader = getClass().getClassLoader();
         Class<?>[] interfaces = new Class<?>[]{ serviceType };
-        RemoteServiceHandler remoteRequestHandler = new RemoteServiceHandler(serviceId, requestHandler);
+        RemoteServiceHandler remoteRequestHandler =
+            new RemoteServiceHandler(serviceId, requestHandler, principal, credentials);
         return (T) Proxy.newProxyInstance(classLoader, interfaces, remoteRequestHandler);
     }
 
