@@ -6,15 +6,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.openengsb.core.api.model.BeanDescription;
-import org.openengsb.core.api.model.OpenEngSBModel;
 import org.openengsb.core.api.remote.MethodCall;
 import org.openengsb.core.api.remote.MethodCallMessage;
 import org.openengsb.core.api.remote.MethodResult.ReturnType;
 import org.openengsb.core.api.remote.MethodResultMessage;
 import org.openengsb.core.api.security.Credentials;
 import org.openengsb.core.common.util.JsonUtils;
-import org.openengsb.core.common.util.ModelUtils;
-import org.openengsb.loom.java.util.ArgumentUtils;
 import org.osgi.framework.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,7 +26,8 @@ public class RemoteServiceHandler implements InvocationHandler {
     private String principal;
     private Credentials credentials;
 
-    public RemoteServiceHandler(String serviceId, RequestHandler requestHandler, String principal, Credentials credentials) {
+    public RemoteServiceHandler(String serviceId, RequestHandler requestHandler, String principal,
+            Credentials credentials) {
         this.serviceId = serviceId;
         this.requestHandler = requestHandler;
         this.principal = principal;
@@ -41,7 +39,6 @@ public class RemoteServiceHandler implements InvocationHandler {
         if (args == null) {
             args = new Object[0];
         }
-        ArgumentUtils.wrapModels(args);
         MethodCall methodCall = createMethodCall(method, args, serviceId);
         MethodCallMessage wrapped = wrapMethodCall(methodCall);
         MethodResultMessage response = requestHandler.process(wrapped);
@@ -52,9 +49,7 @@ public class RemoteServiceHandler implements InvocationHandler {
             LOGGER.error(response.getResult().getClassName() + " - " + response.getResult().getArg());
             throw new RemoteException(response.getResult().getClassName());
         }
-        Object resultObject = response.getResult().getArg();
-        resultObject = ArgumentUtils.unwrapModel(resultObject);
-        return resultObject;
+        return response.getResult().getArg();
     }
 
     private MethodCallMessage wrapMethodCall(MethodCall methodCall) {
@@ -65,11 +60,6 @@ public class RemoteServiceHandler implements InvocationHandler {
     }
 
     private MethodCall createMethodCall(Method method, Object[] args, String serviceId) {
-        for (int i = 0; i < args.length; i++) {
-            if (args[i] instanceof OpenEngSBModel) {
-                args[i] = ModelUtils.generateWrapperOutOfModel((OpenEngSBModel) args[i]);
-            }
-        }
         MethodCall methodCall = new MethodCall(method.getName(), args);
         Map<String, String> metadata = new HashMap<String, String>();
         if (serviceId != null) {

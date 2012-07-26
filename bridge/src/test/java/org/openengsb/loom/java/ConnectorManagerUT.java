@@ -18,7 +18,6 @@ import org.openengsb.connector.usernamepassword.Password;
 import org.openengsb.core.api.ConnectorManager;
 import org.openengsb.core.api.model.ConnectorDescription;
 import org.openengsb.core.api.security.service.UserDataManager;
-import org.openengsb.core.common.util.ModelUtils;
 import org.openengsb.domain.example.ExampleDomain;
 import org.openengsb.domain.example.model.ExampleRequestModel;
 import org.openengsb.domain.example.model.ExampleResponseModel;
@@ -67,7 +66,7 @@ public class ConnectorManagerUT {
         String uuid = domainFactory.createConnector("example");
         domainFactory.registerConnector(uuid, handler);
         final ExampleDomain self = domainFactory.getRemoteProxy(ExampleDomain.class, uuid);
-        ExampleRequestModel modelObject = ModelUtils.createEmptyModelObject(ExampleRequestModel.class);
+        ExampleRequestModel modelObject = new ExampleRequestModel();
         modelObject.setId(42);
         modelObject.setName("foo");
         ExampleResponseModel result = self.doSomethingWithModel(modelObject);

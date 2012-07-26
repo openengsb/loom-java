@@ -26,7 +26,6 @@ import org.openengsb.core.api.remote.MethodCall;
 import org.openengsb.core.api.remote.MethodResult;
 import org.openengsb.core.api.remote.MethodResult.ReturnType;
 import org.openengsb.core.common.util.JsonUtils;
-import org.openengsb.loom.java.util.ArgumentUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,7 +48,6 @@ public class LocalRequestHandler {
 
     private MethodResult doProcess(MethodCall request) throws Exception {
         JsonUtils.convertAllArgs(request);
-        ArgumentUtils.unwrapModels(request.getArgs());
         Class<?>[] argTypes = getArgTypes(request);
         LOGGER.debug("searching for method {} with args {}", request.getMethodName(), argTypes);
         Method method = connector.getClass().getMethod(request.getMethodName(), argTypes);
@@ -57,7 +55,6 @@ public class LocalRequestHandler {
         Object result;
         try {
             result = method.invoke(connector, request.getArgs());
-            result = ArgumentUtils.wrapModel(result);
         } catch (InvocationTargetException e) {
             throw (Exception) e.getTargetException();
         }
