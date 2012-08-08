@@ -51,6 +51,7 @@
     <aether.version>1.13.1</aether.version>
     <maven.version>3.0.4</maven.version>
     <plexus.version>1.5.5</plexus.version>
+    <commons.lang.version>2.6</commons.lang.version>
   </properties>
 
   <licenses>
@@ -140,6 +141,11 @@
         <groupId>org.apache.activemq</groupId>
         <artifactId>activemq-core</artifactId>
         <version>${activemq.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>commons-lang</groupId>
+        <artifactId>commons-lang</artifactId>
+        <version>${commons.lang.version}</version>
       </dependency>
       <!-- Internal Dependencies -->
       <dependency>

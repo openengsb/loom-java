@@ -22,6 +22,8 @@ import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+import org.apache.commons.lang.ClassUtils;
+import org.apache.commons.lang.reflect.MethodUtils;
 import org.openengsb.core.api.remote.MethodCall;
 import org.openengsb.core.api.remote.MethodResult;
 import org.openengsb.core.api.remote.MethodResult.ReturnType;
@@ -50,7 +52,8 @@ public class LocalRequestHandler {
         JsonUtils.convertAllArgs(request);
         Class<?>[] argTypes = getArgTypes(request);
         LOGGER.debug("searching for method {} with args {}", request.getMethodName(), argTypes);
-        Method method = connector.getClass().getMethod(request.getMethodName(), argTypes);
+        Method method = MethodUtils
+                .getMatchingAccessibleMethod(connector.getClass(), request.getMethodName(), argTypes);
         LOGGER.info("invoking method {}", method);
         Object result;
         try {
