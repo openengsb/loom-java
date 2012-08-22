@@ -1,7 +1,12 @@
 package org.openengsb.loom.java;
 
 import java.io.File;
+import java.io.IOException;
 import java.text.DecimalFormat;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.maven.repository.internal.MavenRepositorySystemSession;
 import org.codehaus.plexus.DefaultPlexusContainer;
@@ -20,6 +25,10 @@ import org.sonatype.aether.transfer.AbstractTransferListener;
 import org.sonatype.aether.transfer.TransferCancelledException;
 import org.sonatype.aether.transfer.TransferEvent;
 import org.sonatype.aether.util.artifact.DefaultArtifact;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 public class AetherUtil {
 
@@ -29,7 +38,7 @@ public class AetherUtil {
         return new DefaultPlexusContainer().lookup(RepositorySystem.class);
     }
 
-    private static RepositorySystemSession newSession(RepositorySystem system) {
+    private static RepositorySystemSession newSession(RepositorySystem system) throws ParserConfigurationException, SAXException, IOException {
         MavenRepositorySystemSession session = new MavenRepositorySystemSession();
         final DecimalFormat formatter = (DecimalFormat) DecimalFormat.getInstance();
         formatter.setGroupingUsed(true);
@@ -41,8 +50,16 @@ public class AetherUtil {
                     formatter.format(event.getResource().getContentLength())));
             }
         });
-        String homedir = System.getProperty("user.home");
-        LocalRepository localRepo = new LocalRepository(new File(homedir, ".m2/repository"));
+		String mavenDir = System.getenv("M2_HOME");
+		String configFilePath = mavenDir + File.separator + "conf" + File.separator + "settings.xml";
+		File configFile = new File(configFilePath);
+		DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+		DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+		Document doc = dBuilder.parse(configFile);
+		NodeList  repoNodeList = doc.getElementsByTagName("localRepository").item(0).getChildNodes();
+		Node repoNode = (Node) repoNodeList.item(0);
+		String repoPath = repoNode.getNodeValue();
+        LocalRepository localRepo = new LocalRepository(new File(repoPath));
         session.setLocalRepositoryManager(system.newLocalRepositoryManager(localRepo));
         return session;
     }
