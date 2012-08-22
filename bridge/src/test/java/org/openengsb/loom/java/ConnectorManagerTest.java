@@ -36,15 +36,20 @@ public class ConnectorManagerTest extends ConnectorManagerUT {
         LOGGER.info("injecting features");
         FileUtils.copyURLToFile(ClassLoader.getSystemResource("features.xml"), new File(openengsbRoot,
             "deploy/features.xml"));
-        File executable =
-            new File(openengsbRoot, "bin/openengsb");
+        File executable;
+        if(!isWindows()) {
+        	executable = new File(openengsbRoot, "bin/openengsb");
+        } else {
+        	executable = new File(openengsbRoot, "bin/openengsb.bat");
+        }
         executable.setExecutable(true);
+        
         ProcessBuilder pb = new ProcessBuilder(executable.getAbsolutePath());
         LOGGER.info("startup openengsb");
         process = pb.start();
         URL url = new URL("http://localhost:8090/openengsb/");
         while (true) {
-            try {
+            try {    
                 URLConnection openConnection = url.openConnection();
                 openConnection.connect();
                 openConnection.getContent();
@@ -65,6 +70,12 @@ public class ConnectorManagerTest extends ConnectorManagerUT {
         }
         LOGGER.info("OpenEngSB seems to be completely booted up, starting tests...");
     }
+    
+	private static boolean isWindows() {
+		String os = System.getProperty("os.name").toLowerCase();
+		return (os.indexOf("win") >= 0);
+ 
+	}
 
     @AfterClass
     public static void cleanupTmp() throws Exception {
