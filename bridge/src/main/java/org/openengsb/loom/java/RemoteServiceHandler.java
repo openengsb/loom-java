@@ -11,7 +11,7 @@ import org.openengsb.core.api.remote.MethodCallMessage;
 import org.openengsb.core.api.remote.MethodResult.ReturnType;
 import org.openengsb.core.api.remote.MethodResultMessage;
 import org.openengsb.core.api.security.Credentials;
-import org.openengsb.core.common.util.JsonUtils;
+import org.openengsb.loom.java.util.JsonUtils;
 import org.osgi.framework.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -17,6 +17,7 @@ import javax.jms.Session;
 import javax.jms.TextMessage;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
+import org.codehaus.jackson.map.DeserializationConfig;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.SerializationConfig.Feature;
 import org.openengsb.core.api.remote.MethodCallMessage;
@@ -101,7 +102,11 @@ public class JmsProtocolHandler implements ProtocolHandler {
         }
     }
 
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper().disable(Feature.FAIL_ON_EMPTY_BEANS);
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
+            .disable(Feature.FAIL_ON_EMPTY_BEANS)
+            .disable(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES)
+            .enable(Feature.INDENT_OUTPUT)
+            ;
 
     private Connection connection;
     private Session session;
