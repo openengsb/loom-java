@@ -1,7 +1,8 @@
 package org.openengsb.loom.java;
 
+import static org.junit.Assert.fail;
+
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.URL;
@@ -25,6 +26,7 @@ public class ConnectorManagerTest extends ConnectorManagerUT {
     private static TemporaryFolder tmpFolder = new TemporaryFolder();
 
     private static Process process;
+    private static final int MAX_ATTEMPTS = 500;
 
     @BeforeClass
     public static void setUpOpenEngSB() throws Exception {
@@ -43,7 +45,8 @@ public class ConnectorManagerTest extends ConnectorManagerUT {
         LOGGER.info("startup openengsb");
         process = pb.start();
         URL url = new URL("http://localhost:8090/openengsb/");
-        while (true) {
+        int i = 0;
+        while (i++ < MAX_ATTEMPTS) {
             try {
                 URLConnection openConnection = url.openConnection();
                 openConnection.connect();
@@ -61,9 +64,10 @@ public class ConnectorManagerTest extends ConnectorManagerUT {
                 LOGGER.error("openengsb is not ready yet", e);
                 continue;
             }
-            break;
+            LOGGER.info("OpenEngSB seems to be completely booted up after {} attempts, starting tests...", i);
+            return;
         }
-        LOGGER.info("OpenEngSB seems to be completely booted up, starting tests...");
+        fail("openengsb could not be started after " + i + " attempts");
     }
 
     @AfterClass
