@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
 public class JmsProtocolHandler implements ProtocolHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JmsProtocolHandler.class);
+    private final String applicationid;
 
     private class ReplyQueueListener implements MessageListener {
         @Override
@@ -115,7 +116,8 @@ public class JmsProtocolHandler implements ProtocolHandler {
     private Queue replyQueue;
     private QueueMap<String, Message> replyMessageQueue = new QueueMap<String, Message>();
 
-    public JmsProtocolHandler(String baseURL) throws JMSException {
+    public JmsProtocolHandler(String baseURL, String applicationid) throws JMSException {
+        this.applicationid = applicationid;
         initActiveMQ(baseURL);
         initMainQueues();
     }
@@ -139,7 +141,8 @@ public class JmsProtocolHandler implements ProtocolHandler {
     private void initReplyQueue() throws JMSException {
         String identifier;
         try {
-            identifier = "CLIENT-" + InetAddress.getLocalHost().toString();
+            identifier = String.format("CLIENT-%s-%s",
+                    applicationid, InetAddress.getLocalHost().toString());
         } catch (UnknownHostException e) {
             throw new IllegalStateException(e);
         }
