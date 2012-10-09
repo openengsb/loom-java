@@ -39,6 +39,9 @@ public class RemoteServiceHandler implements InvocationHandler {
         if (args == null) {
             args = new Object[0];
         }
+        if(method.getDeclaringClass().equals(Object.class)){
+            return method.invoke(this, args);
+        }
         MethodCall methodCall = createMethodCall(method, args, serviceId);
         MethodCallMessage wrapped = wrapMethodCall(methodCall);
         MethodResultMessage response = requestHandler.process(wrapped);
