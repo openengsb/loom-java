@@ -38,7 +38,7 @@ public class JmsProtocolHandler implements ProtocolHandler {
     private class ReplyQueueListener implements MessageListener {
         @Override
         public void onMessage(Message message) {
-            LOGGER.info(message.toString());
+            LOGGER.info("got message on reply-queue: {}", message.toString());
             String jmsCorrelationID;
             try {
                 jmsCorrelationID = message.getJMSCorrelationID();
@@ -61,6 +61,7 @@ public class JmsProtocolHandler implements ProtocolHandler {
         }
 
         private Message sendAndReceive(Message message, String correlationId) throws JMSException, InterruptedException {
+            LOGGER.info("sending message to queue recieve and expect answer to queue: \"{}\" with corr-id {}", replyQueue, correlationId);
             message.setJMSReplyTo(replyQueue);
             receiveQueueProducer.send(message);
             return replyMessageQueue.poll(correlationId);
@@ -76,6 +77,7 @@ public class JmsProtocolHandler implements ProtocolHandler {
 
         @Override
         public void onMessage(Message message) {
+            LOGGER.info("got message for connector: {}", message.toString());
             MethodCallMessage request;
             try {
                 request = unmarshal(message, MethodCallMessage.class);
@@ -86,7 +88,7 @@ public class JmsProtocolHandler implements ProtocolHandler {
                 LOGGER.error("Exception when parsing message", e);
                 return;
             }
-            LOGGER.info(request.toString());
+            LOGGER.info("unmarshalled to {}", request.toString());
             MethodResult result = remoteRequestHandler.process(request.getMethodCall());
             String callId = request.getCallId();
             MethodResultMessage response = new MethodResultMessage(result, callId);
@@ -154,9 +156,10 @@ public class JmsProtocolHandler implements ProtocolHandler {
     }
 
     private void initReceiveQueue() throws JMSException {
-        LOGGER.info("creating receive-queue");
+        LOGGER.debug("creating receive-queue");
         Destination destination = session.createQueue("receive");
         receiveQueueProducer = session.createProducer(destination);
+        LOGGER.info("now listening on queue \"receive\"");
     }
 
     @Override
