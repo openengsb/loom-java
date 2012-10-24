@@ -35,7 +35,7 @@ public class ConnectorManagerUT {
 
     @Before
     public void setUp() throws Exception {
-        jmsConfig = new JmsProtocolHandler(baseURL);
+        jmsConfig = new JmsProtocolHandler(baseURL, "junit");
         domainFactory = new ProxyConnectorFactory(jmsConfig, "admin", new Password("password"));
     }
 
@@ -95,6 +95,8 @@ public class ConnectorManagerUT {
     public void createConnectorProxy() throws Exception {
         ExampleDomain handler = new ExampleConnector();
         String uuid = domainFactory.createConnector("example");
+        String uuid2 = domainFactory.createConnector("example");
+
         domainFactory.registerConnector(uuid, handler);
         final ExampleDomain self = domainFactory.getRemoteProxy(ExampleDomain.class, uuid);
         assertThat(self.doSomethingWithMessage("asdf"), is("42"));
