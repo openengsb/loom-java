@@ -33,11 +33,12 @@ import org.slf4j.LoggerFactory;
 public class JmsProtocolHandler implements ProtocolHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JmsProtocolHandler.class);
+    private final String applicationid;
 
     private class ReplyQueueListener implements MessageListener {
         @Override
         public void onMessage(Message message) {
-            LOGGER.info(message.toString());
+            LOGGER.info("got message on reply-queue: {}", message.toString());
             String jmsCorrelationID;
             try {
                 jmsCorrelationID = message.getJMSCorrelationID();
@@ -60,6 +61,7 @@ public class JmsProtocolHandler implements ProtocolHandler {
         }
 
         private Message sendAndReceive(Message message, String correlationId) throws JMSException, InterruptedException {
+            LOGGER.info("sending message to queue recieve and expect answer to queue: \"{}\" with corr-id {}", replyQueue, correlationId);
             message.setJMSReplyTo(replyQueue);
             receiveQueueProducer.send(message);
             return replyMessageQueue.poll(correlationId);
@@ -75,6 +77,7 @@ public class JmsProtocolHandler implements ProtocolHandler {
 
         @Override
         public void onMessage(Message message) {
+            LOGGER.info("got message for connector: {}", message.toString());
             MethodCallMessage request;
             try {
                 request = unmarshal(message, MethodCallMessage.class);
@@ -85,7 +88,7 @@ public class JmsProtocolHandler implements ProtocolHandler {
                 LOGGER.error("Exception when parsing message", e);
                 return;
             }
-            LOGGER.info(request.toString());
+            LOGGER.info("unmarshalled to {}", request.toString());
             MethodResult result = remoteRequestHandler.process(request.getMethodCall());
             String callId = request.getCallId();
             MethodResultMessage response = new MethodResultMessage(result, callId);
@@ -115,7 +118,8 @@ public class JmsProtocolHandler implements ProtocolHandler {
     private Queue replyQueue;
     private QueueMap<String, Message> replyMessageQueue = new QueueMap<String, Message>();
 
-    public JmsProtocolHandler(String baseURL) throws JMSException {
+    public JmsProtocolHandler(String baseURL, String applicationid) throws JMSException {
+        this.applicationid = applicationid;
         initActiveMQ(baseURL);
         initMainQueues();
     }
@@ -139,7 +143,8 @@ public class JmsProtocolHandler implements ProtocolHandler {
     private void initReplyQueue() throws JMSException {
         String identifier;
         try {
-            identifier = "CLIENT-" + InetAddress.getLocalHost().toString();
+            identifier = String.format("CLIENT-%s-%s",
+                    applicationid, InetAddress.getLocalHost().toString());
         } catch (UnknownHostException e) {
             throw new IllegalStateException(e);
         }
@@ -151,9 +156,10 @@ public class JmsProtocolHandler implements ProtocolHandler {
     }
 
     private void initReceiveQueue() throws JMSException {
-        LOGGER.info("creating receive-queue");
+        LOGGER.debug("creating receive-queue");
         Destination destination = session.createQueue("receive");
         receiveQueueProducer = session.createProducer(destination);
+        LOGGER.info("now listening on queue \"receive\"");
     }
 
     @Override

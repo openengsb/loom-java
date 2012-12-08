@@ -21,23 +21,22 @@ public class QueueMap<K, V> {
                 map.notifyAll();
             }
         }
-        LOGGER.info("putting message in queue {}", key);
+        LOGGER.debug("putting message in queue {}", key);
         map.get(key).add(value);
     }
 
     public V poll(K key) throws InterruptedException {
         BlockingQueue<V> queue;
-        LOGGER.info("looking for message for corr-id: {}", key);
+        LOGGER.debug("looking for message for corr-id: {}", key);
         synchronized (map) {
             while (!map.containsKey(key)) {
                 LOGGER.info("waiting for corr-id: {}", key);
                 map.wait();
             }
-            LOGGER.info("queue for corr-id found: {}", key);
+            LOGGER.debug("queue for corr-id found: {}", key);
             queue = map.get(key);
-            LOGGER.info("-SYNC: poll");
         }
-        LOGGER.info("polling queue for corr-id: {}", key);
+        LOGGER.debug("polling queue for corr-id: {}", key);
         return queue.take();
     }
 }
