@@ -19,6 +19,7 @@ package org.openengsb.loom.java;
 
 import java.lang.reflect.Proxy;
 import java.util.HashMap;
+import java.util.Map;
 
 import org.openengsb.core.api.ConnectorManager;
 import org.openengsb.core.api.ConnectorValidationFailedException;
@@ -49,11 +50,15 @@ public class ProxyConnectorFactory {
         return (T) Proxy.newProxyInstance(classLoader, interfaces, remoteRequestHandler);
     }
 
-    public String createConnector(String domainType)
-        throws ConnectorValidationFailedException {
+    public String createConnector(String domainType) throws ConnectorValidationFailedException {
+        return createConnector(domainType, new HashMap<String, Object>());
+    }
+
+    public String createConnector(String domainType, Map<String, Object> properties)
+            throws ConnectorValidationFailedException {
         ConnectorDescription connectorDescription =
             new ConnectorDescription(domainType, "external-connector-proxy", new HashMap<String, String>(),
-                new HashMap<String, Object>());
+                properties);
         String uuid = getConnectorManager().create(connectorDescription);
         return uuid;
     }

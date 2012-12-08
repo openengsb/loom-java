@@ -8,7 +8,7 @@ public class TestApp {
     private static final String baseURL = "failover:(tcp://localhost:6549)?timeout=6000";
 
     public static void main(String[] args) throws Exception {
-        JmsProtocolHandler jmsConfig = new JmsProtocolHandler(baseURL);
+        JmsProtocolHandler jmsConfig = new JmsProtocolHandler(baseURL, "junit");
         ProxyConnectorFactory domainFactory = new ProxyConnectorFactory(jmsConfig, "admin", new Password("password"));
         ExampleDomain handler = new ExampleConnector();
         String uuid = domainFactory.createConnector("example");
