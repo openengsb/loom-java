@@ -1,0 +1,20 @@
+language: java
+script: mvn test license:check
+notifications:
+  email:
+      recipients:
+          - openengsb-notification@googlegroups.com
+      on_success: [change]
+      on_failure: [always]
+
+env:
+    global:
+        - SONATYPE_USERNAME=pieber
+        - secure: "UAiOgQk9zJdTJo3aKXJCg6vV21W8q8PhqsT8OzMVkyNLS1vJ61zRF8uPyq5Q\nwp63RnYKp1vz4YIRc/tv+xDljwxGqpEFUQbcf5dl6W+9M6BahMyspVvlDADF\nzXMTCTZntcUBwT62AUQZn1TX+4uxuEn0SwL+tcdnsxpk2wJuPls="
+
+after_success:
+  - wget https://raw.github.com/openengsb/openengsb-root/master/etc/travis/addServer.py
+  - wget https://raw.github.com/openengsb/openengsb-root/master/etc/travis/deploy
+  - python addServer.py
+  - chmod -R 777 deploy
+  - ./deploy
