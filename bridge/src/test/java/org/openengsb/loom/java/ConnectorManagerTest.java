@@ -21,20 +21,20 @@ import org.slf4j.LoggerFactory;
 public class ConnectorManagerTest extends ConnectorManagerUT {
     private static final Logger LOGGER = LoggerFactory.getLogger(ConnectorManagerTest.class);
 
-    private static String OPENENGSB_VERSION = "3.0.0-SNAPSHOT";
+    private static final String OPENENGSB_VERSION = "3.0.0-SNAPSHOT";
+    private static final String OPENENGSB_FRAMEWORK = "openengsb-framework-" + OPENENGSB_VERSION;
 
-    private static TemporaryFolder tmpFolder = new TemporaryFolder();
+    private static final TemporaryFolder tmpFolder = new TemporaryFolder();
 
-    private static Process process;
     private static final int MAX_ATTEMPTS = 500;
 
     @BeforeClass
     public static void setUpOpenEngSB() throws Exception {
         File fullZIPPath = AetherUtil.downloadArtifact(OPENENGSB_VERSION);;
         tmpFolder.create();
-        LOGGER.info("unpacking openengsb");
+        LOGGER.info("unpacking openengsb to " + tmpFolder.getRoot().getAbsolutePath());
         unzip(fullZIPPath, tmpFolder.getRoot());
-        File openengsbRoot = new File(tmpFolder.getRoot(), "openengsb-framework-" + OPENENGSB_VERSION + "/");
+        File openengsbRoot = new File(tmpFolder.getRoot(), OPENENGSB_FRAMEWORK + "/");
         LOGGER.info("injecting features");
         FileUtils.copyURLToFile(ClassLoader.getSystemResource("features.xml"), new File(openengsbRoot,
             "deploy/features.xml"));
@@ -46,8 +46,10 @@ public class ConnectorManagerTest extends ConnectorManagerUT {
         }
         executable.setExecutable(true);
         ProcessBuilder pb = new ProcessBuilder(executable.getAbsolutePath());
-        LOGGER.info("startup openengsb");
-        process = pb.start();
+        LOGGER.info("starting openengsb ...");
+        pb.start();
+        Thread.sleep(2 * 60 * 1000);
+        LOGGER.info("2 minutes expired -> let's see if openengsb ready");
         URL url = new URL("http://localhost:8090/openengsb/");
         int i = 0;
         while (i++ < MAX_ATTEMPTS) {
@@ -82,10 +84,26 @@ public class ConnectorManagerTest extends ConnectorManagerUT {
     
     @AfterClass
     public static void cleanupTmp() throws Exception {
-        process.destroy();
+    	LOGGER.info("shutting down ...");
+        executeBatchFile("stop");
+        Thread.sleep(30 * 1000);
+        LOGGER.info("deleting openengsb");
         tmpFolder.delete();
     }
 
+    private static void executeBatchFile(String batchFileName) throws IOException {
+    	File openengsbRoot = new File(tmpFolder.getRoot(), OPENENGSB_FRAMEWORK + "/");
+    	File executable;
+        if(!isWindows()) {
+        	executable = new File(openengsbRoot, "bin/" + batchFileName);
+        } else {
+        	executable = new File(openengsbRoot, "bin/" + batchFileName + ".bat");
+        }
+        executable.setExecutable(true);
+        ProcessBuilder pb = new ProcessBuilder(executable.getAbsolutePath());
+        pb.start();
+    }
+    
     private static void unzip(File source, File target) throws IOException {
         ZipFile zipFile = new ZipFile(source);
         Enumeration<?> entries = zipFile.entries();
