@@ -4,7 +4,6 @@ import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.ConnectException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.Enumeration;
@@ -26,11 +25,12 @@ public class ConnectorManagerTest extends ConnectorManagerUT {
 
     private static final TemporaryFolder tmpFolder = new TemporaryFolder();
 
-    private static final int MAX_ATTEMPTS = 500;
+    private static final int MAX_ATTEMPTS = 120;
+    private static final int POLL_INTERVAL = 1000; // 1 second
 
     @BeforeClass
     public static void setUpOpenEngSB() throws Exception {
-        File fullZIPPath = AetherUtil.downloadArtifact(OPENENGSB_VERSION);;
+        File fullZIPPath = AetherUtil.downloadArtifact(OPENENGSB_VERSION);
         tmpFolder.create();
         LOGGER.info("unpacking openengsb to " + tmpFolder.getRoot().getAbsolutePath());
         unzip(fullZIPPath, tmpFolder.getRoot());
@@ -39,17 +39,15 @@ public class ConnectorManagerTest extends ConnectorManagerUT {
         FileUtils.copyURLToFile(ClassLoader.getSystemResource("features.xml"), new File(openengsbRoot,
             "deploy/features.xml"));
         File executable;
-        if(!isWindows()) {
-        	executable = new File(openengsbRoot, "bin/openengsb");
+        if (!isWindows()) {
+            executable = new File(openengsbRoot, "bin/openengsb");
         } else {
-        	executable = new File(openengsbRoot, "bin/openengsb.bat");
+            executable = new File(openengsbRoot, "bin/openengsb.bat");
         }
         executable.setExecutable(true);
         ProcessBuilder pb = new ProcessBuilder(executable.getAbsolutePath());
         LOGGER.info("starting openengsb ...");
         pb.start();
-        Thread.sleep(2 * 60 * 1000);
-        LOGGER.info("2 minutes expired -> let's see if openengsb ready");
         URL url = new URL("http://localhost:8090/openengsb/");
         int i = 0;
         while (i++ < MAX_ATTEMPTS) {
@@ -57,17 +55,9 @@ public class ConnectorManagerTest extends ConnectorManagerUT {
                 URLConnection openConnection = url.openConnection();
                 openConnection.connect();
                 openConnection.getContent();
-            } catch (ConnectException e) {
-                Thread.sleep(300);
-                LOGGER.info("openengsb is not ready yet. {} - {}", e.getClass().getName(), e.getMessage());
-                continue;
-            } catch (IOException e){
-                Thread.sleep(300);
-                LOGGER.info("openengsb is not ready yet. {} - {}", e.getClass().getName(), e.getMessage());
-                continue;
             } catch (Exception e) {
-                Thread.sleep(300);
-                LOGGER.error("openengsb is not ready yet", e);
+                Thread.sleep(POLL_INTERVAL);
+                LOGGER.error("openengsb is not ready yet. {} - {}", e.getClass().getName(), e.getMessage());
                 continue;
             }
             LOGGER.info("OpenEngSB seems to be completely booted up after {} attempts, starting tests...", i);
@@ -76,15 +66,14 @@ public class ConnectorManagerTest extends ConnectorManagerUT {
         fail("openengsb could not be started after " + i + " attempts");
     }
 
-	private static boolean isWindows() {
-		String os = System.getProperty("os.name").toLowerCase();
-		return (os.indexOf("win") >= 0);
- 
-	}
-    
+    private static boolean isWindows() {
+        String os = System.getProperty("os.name").toLowerCase();
+        return (os.indexOf("win") >= 0);
+    }
+
     @AfterClass
     public static void cleanupTmp() throws Exception {
-    	LOGGER.info("shutting down ...");
+        LOGGER.info("shutting down ...");
         executeBatchFile("stop");
         Thread.sleep(30 * 1000);
         LOGGER.info("deleting openengsb");
@@ -92,18 +81,18 @@ public class ConnectorManagerTest extends ConnectorManagerUT {
     }
 
     private static void executeBatchFile(String batchFileName) throws IOException {
-    	File openengsbRoot = new File(tmpFolder.getRoot(), OPENENGSB_FRAMEWORK + "/");
-    	File executable;
-        if(!isWindows()) {
-        	executable = new File(openengsbRoot, "bin/" + batchFileName);
+        File openengsbRoot = new File(tmpFolder.getRoot(), OPENENGSB_FRAMEWORK + "/");
+        File executable;
+        if (!isWindows()) {
+            executable = new File(openengsbRoot, "bin/" + batchFileName);
         } else {
-        	executable = new File(openengsbRoot, "bin/" + batchFileName + ".bat");
+            executable = new File(openengsbRoot, "bin/" + batchFileName + ".bat");
         }
         executable.setExecutable(true);
         ProcessBuilder pb = new ProcessBuilder(executable.getAbsolutePath());
         pb.start();
     }
-    
+
     private static void unzip(File source, File target) throws IOException {
         ZipFile zipFile = new ZipFile(source);
         Enumeration<?> entries = zipFile.entries();
