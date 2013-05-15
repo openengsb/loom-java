@@ -25,7 +25,7 @@ public class ConnectorManagerTest extends ConnectorManagerUT {
 
     private static final TemporaryFolder tmpFolder = new TemporaryFolder();
 
-    private static final int MAX_ATTEMPTS = 120;
+    private static final int MAX_ATTEMPTS = 300;
     private static final int POLL_INTERVAL = 1000; // 1 second
 
     @BeforeClass
