@@ -97,6 +97,16 @@
       <artifactId>hamcrest-library</artifactId>
     </dependency>
 
+   <dependency>
+      <groupId>org.openengsb.labs.endtoend</groupId>
+      <artifactId>labs-endtoend-core</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>org.apache.felix.karaf</groupId>
+          <artifactId>org.apache.felix.karaf.client</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>

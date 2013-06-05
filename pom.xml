@@ -52,6 +52,7 @@
     <maven.version>3.0.4</maven.version>
     <plexus.version>1.5.5</plexus.version>
     <commons.lang.version>2.6</commons.lang.version>
+    <openengsb.labs-endtoend.version>1.0.0-SNAPSHOT</openengsb.labs-endtoend.version>
   </properties>
 
   <licenses>
@@ -234,6 +235,12 @@
         <groupId>org.codehaus.plexus</groupId>
         <artifactId>plexus-container-default</artifactId>
         <version>${plexus.version}</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.openengsb.labs.endtoend</groupId>
+        <artifactId>labs-endtoend-core</artifactId>
+        <version>${openengsb.labs-endtoend.version}</version>
         <scope>test</scope>
       </dependency>
     </dependencies>
