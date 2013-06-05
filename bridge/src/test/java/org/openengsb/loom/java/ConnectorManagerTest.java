@@ -49,25 +49,34 @@ public class ConnectorManagerTest extends ConnectorManagerUT {
         }
         
         // wait some more as karaf is not ready yet
-        try {
-            Thread.sleep(20000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        int i = 0;
+        while (i++ < MAX_ATTEMPTS) {
+            if (isFeatureInstalled(k, "openengsb-framework")) {
+                break;
+            }
+            Thread.sleep(POLL_INTERVAL);
         }
-        
+        if (i == MAX_ATTEMPTS) {
+            fail("karaf failed to start after " + i + " attempts");
+        }
+
         installFeature(k, "openengsb-ports-jms");
         installFeature(k, "openengsb-domain-example");
         installFeature(k, "openengsb-connector-example");
         
-//        try {
-//            String response = k.getShell().execute("feature:list -i", DEFAULT_TIMEOUT, TimeUnit.MINUTES);
-//            System.out.println(response);
-//        } catch (CommandTimeoutException e1) {
-//            e1.printStackTrace();
-//        }
+        i = 0;
+        while (i++ < MAX_ATTEMPTS) {
+            if (isBundleActive(k, "OpenEngSB :: Ports :: JMS")) {
+                break;
+            }
+            Thread.sleep(POLL_INTERVAL);
+        }
+        if (i == MAX_ATTEMPTS) {
+            fail("failed to activate 'OpenEngSB :: Ports :: JMS' after " + i + " attempts");
+        }
         
         URL url = new URL("http://localhost:8090/openengsb/");
-        int i = 0;
+        i = 0;
         while (i++ < MAX_ATTEMPTS) {
             try {
                 URLConnection openConnection = url.openConnection();
@@ -87,9 +96,26 @@ public class ConnectorManagerTest extends ConnectorManagerUT {
     private static void installFeature(Karaf karaf, String feature) {
         LOGGER.info("installing feature " + feature + " ...");
         try {
-            karaf.getShell().execute("feature:install " + feature, DEFAULT_TIMEOUT, TimeUnit.MINUTES);
+            karaf.installFeature(feature, DEFAULT_TIMEOUT, TimeUnit.MINUTES);
         } catch (CommandTimeoutException e1) {
             fail("failed to install feature " + feature);
+        }
+    }
+    
+    private static boolean isFeatureInstalled(Karaf karaf, String feature) {
+        try {
+            return karaf.isFeatureInstalled(feature, DEFAULT_TIMEOUT, TimeUnit.MINUTES);
+        } catch (CommandTimeoutException e1) {
+            LOGGER.info("failed to list installed features");
+            return false;
+        }
+    }
+    
+    private static boolean isBundleActive(Karaf k, String bundleName) {
+        try {
+            return k.isBundleActive(bundleName, DEFAULT_TIMEOUT, TimeUnit.MINUTES);
+        } catch (CommandTimeoutException e) {
+            return false;
         }
     }
     
