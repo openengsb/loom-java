@@ -77,6 +77,10 @@ public final class JsonUtils {
         convertResult(message.getResult());
     }
 
+    public static <T> T convertArgument(Object object, Class<T> clazz) {
+        return MAPPER.convertValue(object, clazz);
+    }
+    
     private JsonUtils() {
     }
 }
