@@ -43,7 +43,7 @@ public class ProxyConnectorFactory {
     @SuppressWarnings("unchecked")
     public <T> T getRemoteProxy(Class<T> serviceType, final String serviceId) {
         RequestHandler requestHandler = remoteConfig.createOutgoingRequestHandler();
-        ClassLoader classLoader = getClass().getClassLoader();
+        ClassLoader classLoader = serviceType.getClassLoader();
         Class<?>[] interfaces = new Class<?>[]{ serviceType };
         RemoteServiceHandler remoteRequestHandler =
             new RemoteServiceHandler(serviceId, requestHandler, principal, credentials);
@@ -55,7 +55,7 @@ public class ProxyConnectorFactory {
     }
 
     public String createConnector(String domainType, Map<String, Object> properties)
-            throws ConnectorValidationFailedException {
+        throws ConnectorValidationFailedException {
         ConnectorDescription connectorDescription =
             new ConnectorDescription(domainType, "external-connector-proxy", new HashMap<String, String>(),
                 properties);
