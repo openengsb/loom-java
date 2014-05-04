@@ -48,7 +48,7 @@ public class LocalRequestHandler {
     }
 
     private MethodResult doProcess(MethodCall request) throws Exception {
-        JsonUtils.convertAllArgs(request);
+        JsonUtils.convertAllArgs(connector.getClass().getClassLoader(), request);
         Class<?>[] argTypes = getArgTypes(request);
         LOGGER.debug("searching for method {} with args {}", request.getMethodName(), argTypes);
         Method method = MethodUtils

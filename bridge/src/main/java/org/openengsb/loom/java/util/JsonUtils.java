@@ -37,9 +37,9 @@ public final class JsonUtils {
 
     private static final ObjectMapper MAPPER = new ObjectMapper().disable(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES);
 
-    private static Object convertArgument(String className, Object arg) {
+    private static Object convertArgument(ClassLoader classLoader, String className, Object arg) {
         try {
-            Class<?> type = findType(className);
+            Class<?> type = findType(classLoader, className);
             return MAPPER.convertValue(arg, type);
         } catch (ClassNotFoundException e) {
             LOGGER.error("could not convert argument " + arg, e);
@@ -47,34 +47,34 @@ public final class JsonUtils {
         }
     }
 
-    private static Class<?> findType(String className) throws ClassNotFoundException {
+    private static Class<?> findType(ClassLoader classLoader, String className) throws ClassNotFoundException {
         if (className.startsWith("[L")) {
-            Class<?> componentType = findType(className.substring(2, className.length() - 1));
+            Class<?> componentType = findType(classLoader, className.substring(2, className.length() - 1));
             return Array.newInstance(componentType, 0).getClass();
         }
-        return JsonUtils.class.getClassLoader().loadClass(className);
+        return classLoader.loadClass(className);
     }
 
-    public static void convertAllArgs(MethodCall call) {
+    public static void convertAllArgs(ClassLoader classLoader, MethodCall call) {
         Object[] args = call.getArgs();
         List<String> classes = call.getClasses();
         Preconditions.checkArgument(args.length == classes.size());
         for (int i = 0; i < args.length; i++) {
-            args[i] = convertArgument(classes.get(i), args[i]);
+            args[i] = convertArgument(classLoader, classes.get(i), args[i]);
         }
     }
 
-    public static void convertResult(MethodResult result) {
-        Object convertArgument = convertArgument(result.getClassName(), result.getArg());
+    public static void convertResult(ClassLoader classLoader, MethodResult result) {
+        Object convertArgument = convertArgument(classLoader, result.getClassName(), result.getArg());
         result.setArg(convertArgument);
     }
 
-    public static void convertAllArgs(MethodCallMessage request) {
-        convertAllArgs(request.getMethodCall());
+    public static void convertAllArgs(ClassLoader classLoader, MethodCallMessage request) {
+        convertAllArgs(classLoader, request.getMethodCall());
     }
 
-    public static void convertResult(MethodResultMessage message) {
-        convertResult(message.getResult());
+    public static void convertResult(ClassLoader classLoader, MethodResultMessage message) {
+        convertResult(classLoader, message.getResult());
     }
 
     public static <T> T convertArgument(Object object, Class<T> clazz) {

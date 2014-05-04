@@ -21,14 +21,16 @@ public class RemoteServiceHandler implements InvocationHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(RemoteServiceHandler.class);
 
     protected String serviceId;
+    private Class<?> serviceClass;
     private RequestHandler requestHandler;
 
     private String principal;
     private Credentials credentials;
-
-    public RemoteServiceHandler(String serviceId, RequestHandler requestHandler, String principal,
+    
+    public RemoteServiceHandler(String serviceId, Class<?> serviceClass, RequestHandler requestHandler, String principal,
             Credentials credentials) {
         this.serviceId = serviceId;
+        this.serviceClass = serviceClass;
         this.requestHandler = requestHandler;
         this.principal = principal;
         this.credentials = credentials;
@@ -46,7 +48,7 @@ public class RemoteServiceHandler implements InvocationHandler {
         MethodCallMessage wrapped = wrapMethodCall(methodCall);
         MethodResultMessage response = requestHandler.process(wrapped);
         if (response.getResult().getType().equals(ReturnType.Object)) {
-            JsonUtils.convertResult(response);
+            JsonUtils.convertResult(serviceClass.getClassLoader(), response);
         }
         if (response.getResult().getType().equals(ReturnType.Exception)) {
             LOGGER.error(response.getResult().getClassName() + " - " + response.getResult().getArg());
