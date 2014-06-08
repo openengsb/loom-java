@@ -1,0 +1,25 @@
+loom-java-1.0.0 2014-06-08
+-------------------------------------------
+
+This is the first release of loom-java. 
+
+### Details
+
+** Bug
+    * [OPENENGSB-3240] - LocalRequestHandler does not find method if argument-types don't match exactly
+    * [OPENENGSB-3297] - cannot handle openengsbModelTail in json
+    * [OPENENGSB-3364] - do not forward calls to object-methods
+    * [OPENENGSB-3608] - fix loom-java testcase
+    * [OPENENGSB-3731] - Java loom failes to load domain model classes in OSGi environment
+
+** Idea
+    * [OPENENGSB-3344] - provide method to create connector if not known
+
+** Improvement
+    * [OPENENGSB-3338] - Enable JunitTests to run on windows
+    * [OPENENGSB-3339] - Enable Junit Tests to fetch Maven Repository from enviroment variable
+    * [OPENENGSB-3366] - require application-id when instantiating factory
+    * [OPENENGSB-3460] - Build openengsb-core projects using hudson
+
+** New Feature
+    * [OPENENGSB-3367] - allow to pass properties when creating connector 
