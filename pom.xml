@@ -30,7 +30,7 @@
 
   <groupId>org.openengsb.loom.java</groupId>
   <artifactId>loom-java-parent</artifactId>
-  <version>1.0.0</version>
+  <version>1.0.1-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>OpenEngSB Loom :: Java</name>
@@ -64,7 +64,7 @@
     <connection>scm:git:git://github.com/openengsb/loom-java.git</connection>
     <developerConnection>scm:git:git@github.com:openengsb/loom-java.git</developerConnection>
     <url>http://github.com/openengsb/loom-java</url>
-    <tag>v1.0.0</tag>
+    <tag>HEAD</tag>
   </scm>
 
   <inceptionYear>2012</inceptionYear>
