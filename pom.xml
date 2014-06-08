@@ -27,7 +27,7 @@
   <parent>
     <groupId>org.openengsb</groupId>
     <artifactId>openengsb-root</artifactId>
-    <version>33</version>
+    <version>35</version>
   </parent>
 
   <groupId>org.openengsb.loom.java</groupId>
@@ -45,14 +45,13 @@
     <maven.source.plugin.version>2.1.2</maven.source.plugin.version>
     <jackson.version>1.9.6</jackson.version>
     <activemq.version>5.5.1</activemq.version>
-    <openengsb.version>3.0.0-SNAPSHOT</openengsb.version>
     <hamcrest.version>1.2.1</hamcrest.version>
     <guava.version>11.0.2</guava.version>
-    <aether.version>1.13.1</aether.version>
     <maven.version>3.0.4</maven.version>
     <plexus.version>1.5.5</plexus.version>
     <commons.lang.version>2.6</commons.lang.version>
-    <openengsb.labs-endtoend.version>1.0.0-SNAPSHOT</openengsb.labs-endtoend.version>
+    <openengsb.version>3.0.0.M1</openengsb.version>
+    <openengsb.labs-endtoend.version>1.0.0</openengsb.labs-endtoend.version>
   </properties>
 
   <licenses>
@@ -205,31 +204,6 @@
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
         <version>${guava.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.sonatype.aether</groupId>
-        <artifactId>aether-api</artifactId>
-        <version>${aether.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.sonatype.aether</groupId>
-        <artifactId>aether-util</artifactId>
-        <version>${aether.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.maven</groupId>
-        <artifactId>maven-aether-provider</artifactId>
-        <version>${maven.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.sonatype.aether</groupId>
-        <artifactId>aether-connector-file</artifactId>
-        <version>${aether.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.sonatype.aether</groupId>
-        <artifactId>aether-connector-asynchttpclient</artifactId>
-        <version>${aether.version}</version>
       </dependency>
       <dependency>
         <groupId>org.codehaus.plexus</groupId>
