@@ -46,7 +46,7 @@ public class ProxyConnectorFactory {
         ClassLoader classLoader = serviceType.getClassLoader();
         Class<?>[] interfaces = new Class<?>[]{ serviceType };
         RemoteServiceHandler remoteRequestHandler =
-            new RemoteServiceHandler(serviceId, requestHandler, principal, credentials);
+            new RemoteServiceHandler(serviceId, serviceType, requestHandler, principal, credentials);
         return (T) Proxy.newProxyInstance(classLoader, interfaces, remoteRequestHandler);
     }
 
