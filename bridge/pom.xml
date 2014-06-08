@@ -121,6 +121,14 @@
       <artifactId>plexus-container-default</artifactId>
       <scope>test</scope>
     </dependency>
+    
+    <dependency>
+      <groupId>org.openengsb.framework</groupId>
+      <artifactId>openengsb-framework</artifactId>
+      <version>${openengsb.version}</version>
+      <type>zip</type>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
 </project>
