@@ -18,6 +18,7 @@
 package org.openengsb.loom.java;
 
 import java.lang.reflect.Proxy;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -40,16 +41,28 @@ public class ProxyConnectorFactory {
         this.credentials = credentials;
     }
 
+    public <T> T getRemoteProxy(Class<T> serviceClass) {
+        return getRemoteProxy(new ServiceIdentifier(serviceClass, Collections.<String, Object>emptyMap(), null));
+    }
+    
+    public <T> T getRemoteProxy(Class<T> serviceClass, Map<String, Object> serviceProperties) {
+        return getRemoteProxy(new ServiceIdentifier(serviceClass, serviceProperties, null));
+    }
+    
+    public <T> T getRemoteProxy(Class<T> serviceClass, final String serviceId) {
+        return getRemoteProxy(new ServiceIdentifier(serviceClass, Collections.<String, Object>emptyMap(), serviceId));
+    }
+    
     @SuppressWarnings("unchecked")
-    public <T> T getRemoteProxy(Class<T> serviceType, final String serviceId) {
+    private <T> T getRemoteProxy(ServiceIdentifier serviceIdentifier) {
         RequestHandler requestHandler = remoteConfig.createOutgoingRequestHandler();
-        ClassLoader classLoader = serviceType.getClassLoader();
-        Class<?>[] interfaces = new Class<?>[]{ serviceType };
+        ClassLoader classLoader = serviceIdentifier.getServiceClass().getClassLoader();
+        Class<?>[] interfaces = new Class<?>[]{ serviceIdentifier.getServiceClass() };
         RemoteServiceHandler remoteRequestHandler =
-            new RemoteServiceHandler(serviceId, serviceType, requestHandler, principal, credentials);
+            new RemoteServiceHandler(serviceIdentifier, requestHandler, principal, credentials);
         return (T) Proxy.newProxyInstance(classLoader, interfaces, remoteRequestHandler);
     }
-
+  
     public String createConnector(String domainType) throws ConnectorValidationFailedException {
         return createConnector(domainType, new HashMap<String, Object>());
     }
@@ -59,8 +72,7 @@ public class ProxyConnectorFactory {
         ConnectorDescription connectorDescription =
             new ConnectorDescription(domainType, "external-connector-proxy", new HashMap<String, String>(),
                 properties);
-        String uuid = getConnectorManager().create(connectorDescription);
-        return uuid;
+        return getConnectorManager().create(connectorDescription);
     }
 
     public void registerConnector(String uuid, Domain connectorInstance) {
@@ -80,11 +92,11 @@ public class ProxyConnectorFactory {
     }
 
     private ConnectorManager getConnectorManager() {
-        return getRemoteProxy(ConnectorManager.class, null);
+        return getRemoteProxy(ConnectorManager.class);
     }
 
     private ProxyConnectorRegistry getConnectorRegistry() {
-        return getRemoteProxy(ProxyConnectorRegistry.class, null);
+        return getRemoteProxy(ProxyConnectorRegistry.class);
     }
 
 }
