@@ -62,7 +62,7 @@ class RemoteServiceHandler implements InvocationHandler {
     }
 
     private MethodCall createMethodCall(Method method, Object[] args) {
-        MethodCall methodCall = new MethodCall(method.getName(), args);
+        MethodCall methodCall = new MethodCall(method, args);
         Map<String, String> metadata = new HashMap<String, String>();
         metadata.put("serviceFilter", serviceIdentifier.getServiceFilter());
         metadata.put("contextId", "root");
