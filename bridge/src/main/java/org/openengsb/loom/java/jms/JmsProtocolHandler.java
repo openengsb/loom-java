@@ -17,9 +17,6 @@ import javax.jms.Session;
 import javax.jms.TextMessage;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
-import org.codehaus.jackson.map.DeserializationConfig;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.map.SerializationConfig.Feature;
 import org.openengsb.core.api.remote.MethodCallMessage;
 import org.openengsb.core.api.remote.MethodResult;
 import org.openengsb.core.api.remote.MethodResultMessage;
@@ -30,10 +27,14 @@ import org.openengsb.loom.java.util.QueueMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+
 public class JmsProtocolHandler implements ProtocolHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JmsProtocolHandler.class);
-    private final String applicationid;
+    private final String applicationId;
 
     private class ReplyQueueListener implements MessageListener {
         @Override
@@ -106,10 +107,8 @@ public class JmsProtocolHandler implements ProtocolHandler {
     }
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
-            .disable(Feature.FAIL_ON_EMPTY_BEANS)
-            .disable(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES)
-            .enable(Feature.INDENT_OUTPUT)
-            ;
+            .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+            .enable(SerializationFeature.INDENT_OUTPUT);
 
     private Connection connection;
     private Session session;
@@ -118,8 +117,8 @@ public class JmsProtocolHandler implements ProtocolHandler {
     private Queue replyQueue;
     private QueueMap<String, Message> replyMessageQueue = new QueueMap<String, Message>();
 
-    public JmsProtocolHandler(String baseURL, String applicationid) throws JMSException {
-        this.applicationid = applicationid;
+    public JmsProtocolHandler(String baseURL, String applicationId) throws JMSException {
+        this.applicationId = applicationId;
         initActiveMQ(baseURL);
         initMainQueues();
     }
@@ -144,7 +143,7 @@ public class JmsProtocolHandler implements ProtocolHandler {
         String identifier;
         try {
             identifier = String.format("CLIENT-%s-%s",
-                    applicationid, InetAddress.getLocalHost().toString());
+                    applicationId, InetAddress.getLocalHost().toString());
         } catch (UnknownHostException e) {
             throw new IllegalStateException(e);
         }

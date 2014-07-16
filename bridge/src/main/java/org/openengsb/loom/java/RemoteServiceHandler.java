@@ -12,25 +12,22 @@ import org.openengsb.core.api.remote.MethodResult.ReturnType;
 import org.openengsb.core.api.remote.MethodResultMessage;
 import org.openengsb.core.api.security.Credentials;
 import org.openengsb.loom.java.util.JsonUtils;
-import org.osgi.framework.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class RemoteServiceHandler implements InvocationHandler {
+class RemoteServiceHandler implements InvocationHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RemoteServiceHandler.class);
 
-    protected String serviceId;
-    private Class<?> serviceClass;
+    private ServiceIdentifier serviceIdentifier;
     private RequestHandler requestHandler;
 
     private String principal;
     private Credentials credentials;
     
-    public RemoteServiceHandler(String serviceId, Class<?> serviceClass, RequestHandler requestHandler, String principal,
+    RemoteServiceHandler(ServiceIdentifier serviceIdentifier, RequestHandler requestHandler, String principal,
             Credentials credentials) {
-        this.serviceId = serviceId;
-        this.serviceClass = serviceClass;
+        this.serviceIdentifier = serviceIdentifier;
         this.requestHandler = requestHandler;
         this.principal = principal;
         this.credentials = credentials;
@@ -44,11 +41,11 @@ public class RemoteServiceHandler implements InvocationHandler {
         if(method.getDeclaringClass().equals(Object.class)){
             return method.invoke(this, args);
         }
-        MethodCall methodCall = createMethodCall(method, args, serviceId);
+        MethodCall methodCall = createMethodCall(method, args);
         MethodCallMessage wrapped = wrapMethodCall(methodCall);
         MethodResultMessage response = requestHandler.process(wrapped);
         if (response.getResult().getType().equals(ReturnType.Object)) {
-            JsonUtils.convertResult(serviceClass.getClassLoader(), response);
+            JsonUtils.convertResult(serviceIdentifier.getServiceClass().getClassLoader(), response);
         }
         if (response.getResult().getType().equals(ReturnType.Exception)) {
             LOGGER.error(response.getResult().getClassName() + " - " + response.getResult().getArg());
@@ -64,17 +61,10 @@ public class RemoteServiceHandler implements InvocationHandler {
         return methodCallRequest;
     }
 
-    private MethodCall createMethodCall(Method method, Object[] args, String serviceId) {
+    private MethodCall createMethodCall(Method method, Object[] args) {
         MethodCall methodCall = new MethodCall(method.getName(), args);
         Map<String, String> metadata = new HashMap<String, String>();
-        if (serviceId != null) {
-            metadata.put("serviceFilter",
-                String.format("(&(%s=%s)(%s=%s))", Constants.OBJECTCLASS, method.getDeclaringClass().getName(),
-                    "service.pid", serviceId));
-        } else {
-            metadata.put("serviceFilter",
-                String.format("(%s=%s)", Constants.OBJECTCLASS, method.getDeclaringClass().getName()));
-        }
+        metadata.put("serviceFilter", serviceIdentifier.getServiceFilter());
         metadata.put("contextId", "root");
         methodCall.setMetaData(metadata);
         return methodCall;

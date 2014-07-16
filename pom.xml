@@ -36,19 +36,13 @@
   <name>OpenEngSB Loom :: Java</name>
 
   <properties>
-    <osgi.version>4.2.0</osgi.version>
-    <junit.version>4.10</junit.version>
-    <slf4j.version>1.6.4</slf4j.version>
-    <mockito.version>1.8.5</mockito.version>
     <maven.source.plugin.version>2.1.2</maven.source.plugin.version>
-    <jackson.version>1.9.6</jackson.version>
-    <activemq.version>5.5.1</activemq.version>
+  
+    <junit.version>4.10</junit.version>
     <hamcrest.version>1.2.1</hamcrest.version>
-    <guava.version>11.0.2</guava.version>
-    <maven.version>3.0.4</maven.version>
-    <plexus.version>1.5.5</plexus.version>
-    <commons.lang.version>2.6</commons.lang.version>
-    <openengsb.version>3.0.0.M1</openengsb.version>
+    <mockito.version>1.8.5</mockito.version>
+    
+    <openengsb.version>3.0.0-SNAPSHOT</openengsb.version>
     <openengsb.labs-endtoend.version>1.0.0</openengsb.labs-endtoend.version>
   </properties>
 
@@ -126,42 +120,11 @@
         <version>${openengsb.version}</version>
         <scope>test</scope>
       </dependency>
-      <dependency>
-        <groupId>org.codehaus.jackson</groupId>
-        <artifactId>jackson-core-asl</artifactId>
-        <version>${jackson.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.codehaus.jackson</groupId>
-        <artifactId>jackson-mapper-asl</artifactId>
-        <version>${jackson.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.activemq</groupId>
-        <artifactId>activemq-core</artifactId>
-        <version>${activemq.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>commons-lang</groupId>
-        <artifactId>commons-lang</artifactId>
-        <version>${commons.lang.version}</version>
-      </dependency>
       <!-- Internal Dependencies -->
       <dependency>
         <groupId>org.openengsb.loom.java</groupId>
         <artifactId>org.openengsb.loom.java</artifactId>
         <version>${project.version}</version>
-      </dependency>
-      <!-- OSGi Dependencies -->
-      <dependency>
-        <groupId>org.osgi</groupId>
-        <artifactId>org.osgi.core</artifactId>
-        <version>${osgi.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.osgi</groupId>
-        <artifactId>org.osgi.compendium</artifactId>
-        <version>${osgi.version}</version>
       </dependency>
       <!-- Logging API -->
       <dependency>
@@ -197,17 +160,6 @@
         <groupId>org.hamcrest</groupId>
         <artifactId>hamcrest-library</artifactId>
         <version>${hamcrest.version}</version>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>com.google.guava</groupId>
-        <artifactId>guava</artifactId>
-        <version>${guava.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.codehaus.plexus</groupId>
-        <artifactId>plexus-container-default</artifactId>
-        <version>${plexus.version}</version>
         <scope>test</scope>
       </dependency>
       <dependency>
