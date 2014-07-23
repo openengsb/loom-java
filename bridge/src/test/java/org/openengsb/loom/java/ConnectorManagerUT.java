@@ -1,6 +1,7 @@
 package org.openengsb.loom.java;
 
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
@@ -102,6 +103,43 @@ public class ConnectorManagerUT {
     }
     
     @Test
+    public void testSendNull() throws ConnectorValidationFailedException {
+        String connectorId = createExampleConnector("LooM");
+        ExampleDomain connectorProxy = domainFactory.getRemoteProxy(ExampleDomain.class, connectorId);
+        String result = connectorProxy.doSomethingWithMessage(null);
+        assertThat(result, CoreMatchers.equalTo(REPLY_HEADER + "LooM: null"));
+        deleteExampleConnector(connectorId);
+    }
+    
+    @Test
+    public void testReceiveNull() throws ConnectorValidationFailedException {
+        String connectorId = createExampleConnector("LooM");
+        ExampleDomain connectorProxy = domainFactory.getRemoteProxy(ExampleDomain.class, connectorId);
+        String result = connectorProxy.doSomethingWithMessage("<NULL>");
+        assertThat(result, nullValue());
+        deleteExampleConnector(connectorId);
+    }
+    
+    @Test
+    public void testSendNullModel() throws ConnectorValidationFailedException {
+        String connectorId = createExampleConnector("LooM");
+        ExampleDomain connectorProxy = domainFactory.getRemoteProxy(ExampleDomain.class, connectorId);
+        ExampleResponseModel response = connectorProxy.doSomethingWithModel(null);
+        assertThat(response, nullValue());
+        deleteExampleConnector(connectorId);
+    }
+    
+    @Test
+    public void testSendNullModelAttr() throws ConnectorValidationFailedException {
+        String connectorId = createExampleConnector("LooM");
+        ExampleDomain connectorProxy = domainFactory.getRemoteProxy(ExampleDomain.class, connectorId);
+        ExampleRequestModel request = new ExampleRequestModel();
+        ExampleResponseModel response = connectorProxy.doSomethingWithModel(request);
+        assertThat(response.getResult(), nullValue());
+        deleteExampleConnector(connectorId);
+    }
+    
+    @Test
     public void testCallOnRegisteredConnectorWithModel() throws Exception {
         String uuid = registerExampleConnector();
         final ExampleDomain self = domainFactory.getRemoteProxy(ExampleDomain.class, uuid);
@@ -109,7 +147,7 @@ public class ConnectorManagerUT {
         modelObject.setId(42);
         modelObject.setName("foo");
         ExampleResponseModel result = self.doSomethingWithModel(modelObject);
-        assertThat(result.getResult(), is("foo"));
+        assertThat(result.getResult(), equalTo("foo"));
 
         domainFactory.unregisterConnector(uuid);
         domainFactory.deleteConnector(uuid);
@@ -119,7 +157,7 @@ public class ConnectorManagerUT {
     public void testCallOnUnregisteredConnectorFails() throws Exception {
         String uuid = registerExampleConnector();
         final ExampleDomain self = domainFactory.getRemoteProxy(ExampleDomain.class, uuid);
-        assertThat(self.doSomethingWithMessage("asdf"), is("42"));
+        assertThat(self.doSomethingWithMessage("asdf"), equalTo("42"));
         domainFactory.unregisterConnector(uuid);
         try {
             self.doSomethingWithMessage("stuff");
