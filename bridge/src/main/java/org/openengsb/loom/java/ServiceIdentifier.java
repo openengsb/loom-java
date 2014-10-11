@@ -5,8 +5,6 @@ import java.util.Map.Entry;
 
 import org.osgi.framework.Constants;
 
-import com.google.common.base.Preconditions;
-
 class ServiceIdentifier {
     private Class<?> serviceClass;
     private Map<String, Object> serviceProperties;
