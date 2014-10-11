@@ -120,6 +120,18 @@
         <version>${openengsb.version}</version>
         <scope>test</scope>
       </dependency>
+      <dependency>
+        <groupId>org.openengsb.domain</groupId>
+        <artifactId>org.openengsb.domain.SQLCode</artifactId>
+        <version>${openengsb.version}</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.openengsb.domain</groupId>
+        <artifactId>org.openengsb.domain.OOSourceCode</artifactId>
+        <version>${openengsb.version}</version>
+        <scope>test</scope>
+      </dependency>
       <!-- Internal Dependencies -->
       <dependency>
         <groupId>org.openengsb.loom.java</groupId>
